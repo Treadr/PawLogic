@@ -12,7 +12,7 @@ import type { NativeStackScreenProps } from '@react-navigation/native-stack';
 
 import { colors } from '../../constants/colors';
 import { fontSize, spacing, borderRadius } from '../../constants/typography';
-import { api } from '../../services/api';
+import * as petService from '../../services/pets';
 import type { Pet } from '../../types/pet';
 import type { RootStackParamList } from '../../navigation/AppNavigator';
 
@@ -24,7 +24,7 @@ export default function PetListScreen({ navigation }: Props) {
 
   const loadPets = useCallback(async () => {
     try {
-      const data = await api.get<Pet[]>('/pets');
+      const data = await petService.listPets();
       setPets(data);
     } catch (err) {
       console.error('Failed to load pets:', err);

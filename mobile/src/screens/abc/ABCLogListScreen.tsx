@@ -11,7 +11,7 @@ import type { NativeStackScreenProps } from '@react-navigation/native-stack';
 
 import { colors } from '../../constants/colors';
 import { fontSize, spacing, borderRadius } from '../../constants/typography';
-import { api } from '../../services/api';
+import * as abcLogService from '../../services/abcLogs';
 import type { ABCLog } from '../../types/abc-log';
 import type { RootStackParamList } from '../../navigation/AppNavigator';
 
@@ -26,7 +26,7 @@ export default function ABCLogListScreen({ route }: Props) {
 
   const loadLogs = useCallback(async () => {
     try {
-      const data = await api.get<ABCLog[]>(`/abc-logs?pet_id=${petId}`);
+      const data = await abcLogService.listABCLogs(petId);
       setLogs(data);
     } catch (err) {
       console.error('Failed to load logs:', err);

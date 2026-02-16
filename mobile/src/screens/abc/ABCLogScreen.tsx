@@ -12,18 +12,13 @@ import type { NativeStackScreenProps } from '@react-navigation/native-stack';
 
 import { colors } from '../../constants/colors';
 import { fontSize, spacing, borderRadius } from '../../constants/typography';
-import { api } from '../../services/api';
+import * as abcLogService from '../../services/abcLogs';
+import type { Taxonomy } from '../../services/abcLogs';
 import ChipSelector from '../../components/ChipSelector';
 import SeveritySlider from '../../components/SeveritySlider';
 import type { RootStackParamList } from '../../navigation/AppNavigator';
 
 type Props = NativeStackScreenProps<RootStackParamList, 'ABCLog'>;
-
-interface Taxonomy {
-  antecedent_categories: Record<string, string[]>;
-  behavior_categories: Record<string, string[]>;
-  consequence_categories: Record<string, string[]>;
-}
 
 const STEPS = ['Antecedent', 'Behavior', 'Consequence', 'Review'];
 
@@ -50,7 +45,7 @@ export default function ABCLogScreen({ route, navigation }: Props) {
   const [conNotes, setConNotes] = useState('');
 
   useEffect(() => {
-    api.get<Taxonomy>(`/abc-logs/taxonomy/${species}`).then(setTaxonomy);
+    abcLogService.getTaxonomy(species).then(setTaxonomy);
   }, [species]);
 
   const humanize = (s: string) => s.replace(/_/g, ' ');
@@ -88,7 +83,7 @@ export default function ABCLogScreen({ route, navigation }: Props) {
   const handleSubmit = async () => {
     setLoading(true);
     try {
-      await api.post('/abc-logs', {
+      await abcLogService.createABCLog({
         pet_id: petId,
         antecedent_category: antCategory,
         antecedent_tags: antTags,

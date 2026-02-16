@@ -12,7 +12,7 @@ import type { NativeStackScreenProps } from '@react-navigation/native-stack';
 
 import { colors } from '../../constants/colors';
 import { fontSize, spacing, borderRadius } from '../../constants/typography';
-import { api } from '../../services/api';
+import * as petService from '../../services/pets';
 import type { RootStackParamList } from '../../navigation/AppNavigator';
 
 type Props = NativeStackScreenProps<RootStackParamList, 'AddPet'>;
@@ -32,7 +32,7 @@ export default function AddPetScreen({ navigation }: Props) {
     }
     setLoading(true);
     try {
-      await api.post('/pets', {
+      await petService.createPet({
         name: name.trim(),
         species,
         breed: breed.trim() || undefined,

@@ -13,7 +13,8 @@ import type { NativeStackScreenProps } from '@react-navigation/native-stack';
 
 import { colors } from '../../constants/colors';
 import { fontSize, spacing, borderRadius } from '../../constants/typography';
-import { api } from '../../services/api';
+import * as insightService from '../../services/insights';
+import * as analysisService from '../../services/analysis';
 import type { Insight } from '../../types/insight';
 import type { RootStackParamList } from '../../navigation/AppNavigator';
 
@@ -41,7 +42,7 @@ export default function InsightsScreen({ route }: Props) {
 
   const loadInsights = useCallback(async () => {
     try {
-      const data = await api.get<Insight[]>(`/pets/${petId}/insights`);
+      const data = await insightService.listInsights(petId);
       setInsights(data);
     } catch (err) {
       console.error('Failed to load insights:', err);
@@ -63,10 +64,7 @@ export default function InsightsScreen({ route }: Props) {
   const runDetection = async () => {
     setDetecting(true);
     try {
-      const result = await api.post<{ patterns_found: number }>(
-        `/analysis/detect-patterns?pet_id=${petId}`,
-        {},
-      );
+      const result = await analysisService.detectPatterns(petId);
       Alert.alert(
         'Analysis Complete',
         `Found ${result.patterns_found} pattern(s).`,
@@ -81,7 +79,7 @@ export default function InsightsScreen({ route }: Props) {
 
   const markRead = async (insightId: string) => {
     try {
-      await api.post(`/insights/${insightId}`, { is_read: true });
+      await insightService.markInsightRead(insightId);
       setInsights((prev) =>
         prev.map((i) => (i.id === insightId ? { ...i, is_read: true } : i)),
       );
