@@ -7,6 +7,7 @@ from fastapi.middleware.cors import CORSMiddleware
 from app.api.v1.router import v1_router
 from app.config import settings
 from app.core.exceptions import register_exception_handlers
+from app.core.middleware import RequestLoggingMiddleware
 
 
 @asynccontextmanager
@@ -52,6 +53,9 @@ app.add_middleware(
     allow_methods=["*"],
     allow_headers=["*"],
 )
+
+# Middleware (order matters: last added = first executed)
+app.add_middleware(RequestLoggingMiddleware)
 
 # Exception handlers
 register_exception_handlers(app)
