@@ -47,10 +47,8 @@ export default function PetListScreen({ navigation }: Props) {
     <TouchableOpacity
       style={styles.petCard}
       onPress={() =>
-        navigation.navigate('ABCLog', {
+        navigation.navigate('PetDetail', {
           petId: item.id,
-          petName: item.name,
-          species: item.species,
         })
       }
     >

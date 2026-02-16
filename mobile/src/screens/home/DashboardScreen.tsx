@@ -12,20 +12,14 @@ import type { NativeStackScreenProps } from '@react-navigation/native-stack';
 
 import { colors } from '../../constants/colors';
 import { fontSize, spacing, borderRadius } from '../../constants/typography';
-import { api } from '../../services/api';
 import { logout } from '../../services/auth';
+import * as petService from '../../services/pets';
+import * as progressService from '../../services/progress';
 import type { Pet } from '../../types/pet';
+import type { DashboardData } from '../../services/progress';
 import type { RootStackParamList } from '../../navigation/AppNavigator';
 
 type Props = NativeStackScreenProps<RootStackParamList, 'Dashboard'>;
-
-interface DashboardData {
-  total_logs: number;
-  recent_7d: number;
-  trend_pct: number;
-  avg_severity: number | null;
-  pattern_detection_ready: boolean;
-}
 
 export default function DashboardScreen({ navigation }: Props) {
   const [pets, setPets] = useState<Pet[]>([]);
@@ -34,15 +28,13 @@ export default function DashboardScreen({ navigation }: Props) {
 
   const loadData = useCallback(async () => {
     try {
-      const petList = await api.get<Pet[]>('/pets');
+      const petList = await petService.listPets();
       setPets(petList);
 
       const dashMap: Record<string, DashboardData> = {};
       for (const pet of petList) {
         try {
-          const d = await api.get<DashboardData>(
-            `/progress/dashboard?pet_id=${pet.id}`,
-          );
+          const d = await progressService.getDashboard(pet.id);
           dashMap[pet.id] = d;
         } catch {
           // pet may not have logs yet
@@ -127,12 +119,15 @@ export default function DashboardScreen({ navigation }: Props) {
           const dash = dashboards[pet.id];
           return (
             <View key={pet.id} style={styles.petSummary}>
-              <View style={styles.petHeader}>
+              <TouchableOpacity
+                style={styles.petHeader}
+                onPress={() => navigation.navigate('PetDetail', { petId: pet.id })}
+              >
                 <Text style={styles.petEmoji}>
                   {pet.species === 'cat' ? '\uD83D\uDC31' : '\uD83D\uDC36'}
                 </Text>
                 <Text style={styles.petName}>{pet.name}</Text>
-              </View>
+              </TouchableOpacity>
 
               {dash ? (
                 <View style={styles.statsRow}>
