@@ -2,102 +2,165 @@
 
 ## Environments
 
-| Environment | Backend | Database | Mobile | Purpose |
-|-------------|---------|----------|--------|---------|
-| Local | localhost:8000 | Supabase local | Expo Go | Development |
-| Staging | Railway staging | Supabase staging | Internal build | Pre-production validation |
-| Production | Railway prod | Supabase prod | App Store / Play Store | Live users |
+| Environment | Backend | Database | Web | Mobile | Purpose |
+|-------------|---------|----------|-----|--------|---------|
+| Local | Docker :8000 | Docker PostgreSQL :5433 | Docker nginx :3000 | Expo Go | Development |
+| Staging | TBD | TBD | TBD | Internal build | Pre-production |
+| Production | TBD | TBD | TBD | App Store / Play Store | Live users |
 
-## Deployment Procedures
+## Local Deployment (Docker Compose)
 
-### Backend → Staging
+The full stack runs locally via Docker Compose with 5 services.
+
+### Start All Services
 ```bash
-# 1. Ensure all tests pass
-cd backend && pytest tests/ -v
-
-# 2. Apply database migrations to staging
-ENVIRONMENT=staging alembic upgrade head
-
-# 3. Deploy to Railway staging
-railway up --environment staging
-
-# 4. Verify
-curl https://staging-api.pawlogic.app/health
+docker compose up -d
 ```
 
-### Backend → Production
+### Verify Deployment
 ```bash
-# 1. Staging has been validated
-# 2. All tests pass
-# 3. PR merged to main
+# All containers running
+docker compose ps
 
-# 4. Apply database migrations to production
-ENVIRONMENT=production alembic upgrade head
+# API health
+curl http://localhost:8000/api/v1/health/detailed
 
-# 5. Deploy to Railway production
-railway up --environment production
+# Frontend serving
+curl -s -o /dev/null -w "%{http_code}" http://localhost:3000
 
-# 6. Verify health
-curl https://api.pawlogic.app/health
-curl https://api.pawlogic.app/health/detailed
-
-# 7. Monitor Sentry for 15 minutes
-# If error rate spikes: railway rollback
+# API proxy through frontend
+curl http://localhost:3000/api/v1/health
 ```
 
-### Mobile → TestFlight / Internal Testing
+### Rebuild After Changes
 ```bash
-# 1. All mobile tests pass
-cd mobile && npx jest --ci
+# Rebuild specific service
+docker compose up -d --build api
+docker compose up -d --build frontend
 
-# 2. Increment version
-# Edit app.config.ts: version and buildNumber
-
-# 3. Build
-eas build --platform all --profile preview
-
-# 4. Distribute
-# iOS: Automatically appears in TestFlight
-# Android: Download from EAS dashboard or internal track
+# Rebuild everything
+docker compose up -d --build
 ```
 
-### Mobile → App Store / Play Store
+### View Logs
 ```bash
-# 1. Production build
-eas build --platform all --profile production
-
-# 2. Submit
-eas submit --platform ios
-eas submit --platform android
-
-# 3. Monitor review status
-# App Store Connect / Google Play Console
+docker compose logs -f api        # Follow API logs
+docker compose logs worker --tail 20  # Last 20 worker log lines
+docker compose logs frontend      # nginx access logs
 ```
 
-### OTA Update (JavaScript-Only Changes)
+### Database Management
 ```bash
-eas update --branch production --message "Fix insight card rendering"
+# Run migrations
+docker compose exec api alembic upgrade head
+
+# Seed demo data
+docker compose exec api python -m app.scripts.seed_data
+
+# Connect to PostgreSQL directly
+docker compose exec db psql -U PawLogic_DB -d PawLogic
+
+# Database backup
+docker compose exec db pg_dump -U PawLogic_DB PawLogic > backup.sql
+```
+
+### Stop Services
+```bash
+# Stop (preserve data)
+docker compose down
+
+# Stop and delete data volumes
+docker compose down -v
+```
+
+## Production Deployment (Planned)
+
+### Recommended Architecture
+
+**Option A: Managed Services (Lower Ops)**
+| Component | Service | Notes |
+|-----------|---------|-------|
+| Backend API | Railway or Render | Auto-deploy from GitHub, built-in SSL |
+| Web Frontend | Vercel or Cloudflare Pages | Edge CDN, automatic builds from git |
+| Database | Supabase or Railway PostgreSQL | Managed backups, connection pooling |
+| Redis | Railway or Upstash | Managed Redis with persistence |
+| Worker | Railway (separate service) | Same Docker image, different command |
+
+**Option B: Single-Host Docker (Full Control)**
+| Component | Service | Notes |
+|-----------|---------|-------|
+| All services | Single VPS (AWS EC2, DigitalOcean) | docker compose in production mode |
+| Reverse proxy | nginx or Caddy | SSL termination, rate limiting |
+| Monitoring | Prometheus + Grafana | Metrics and alerting |
+| Backups | Cron + pg_dump + S3 | Automated database backups |
+
+### Pre-Production Checklist
+- [ ] Replace dev JWT auth with real auth provider (Supabase Auth recommended)
+- [ ] Set strong, unique secrets for all environment variables
+- [ ] Remove hardcoded credentials from docker-compose.yml (use env files or secrets manager)
+- [ ] Configure CORS_ORIGINS for production domains only
+- [ ] Set `ENVIRONMENT=production` in backend config
+- [ ] Configure ANTHROPIC_API_KEY with spending limits
+- [ ] Set up SSL certificates (Let's Encrypt / Cloudflare)
+- [ ] Set up error monitoring (Sentry)
+- [ ] Set up database backups (automated pg_dump or managed service)
+- [ ] Configure rate limiting per user tier
+- [ ] Set up log aggregation
+- [ ] Load test critical endpoints (ABC log creation, pattern detection)
+- [ ] Security audit: no exposed secrets, proper CORS, input validation
+
+### Mobile Deployment
+
+#### TestFlight / Internal Testing
+```bash
+cd mobile
+
+# Configure EAS
+npx eas-cli build:configure
+
+# Build for internal distribution
+npx eas-cli build --platform all --profile preview
+
+# iOS: Appears in TestFlight automatically
+# Android: Download from EAS dashboard
+```
+
+#### App Store / Play Store
+```bash
+# Production build
+npx eas-cli build --platform all --profile production
+
+# Submit
+npx eas-cli submit --platform ios
+npx eas-cli submit --platform android
+```
+
+#### OTA Updates (JavaScript-only changes)
+```bash
+npx eas-cli update --branch production --message "Fix insight card rendering"
 ```
 
 ## Rollback Procedures
-See `skills/deployment.md` for detailed rollback instructions.
 
-**Quick reference:**
-- **Backend:** `railway rollback` (instant)
-- **Mobile OTA:** Push a new update reverting the change
-- **Mobile binary:** Cannot rollback -- push a hotfix build forward
-- **Database:** `alembic downgrade -1` (test in staging first)
+| Component | Rollback Method | Notes |
+|-----------|----------------|-------|
+| Backend (managed) | Redeploy previous commit | Railway/Render have instant rollback |
+| Backend (Docker) | `docker compose pull && docker compose up -d` | Pin image tags for safety |
+| Frontend (Vercel) | Instant rollback in dashboard | One click |
+| Database | `alembic downgrade -1` | Test in staging first |
+| Mobile (OTA) | Push new update reverting changes | Instant for JS changes |
+| Mobile (binary) | Cannot rollback -- push hotfix forward | Binary updates require store review |
 
-## Pre-Deployment Checklist
-- [ ] All tests passing in CI
-- [ ] Code reviewed and approved
-- [ ] Database migrations tested on staging
-- [ ] Environment variables verified for target environment
-- [ ] No known critical bugs in current build
-- [ ] Rollback plan identified
+## Monitoring
 
-## Monitoring After Deploy
-- Check Sentry for new errors (15-minute window)
-- Check Railway metrics for latency/memory anomalies
-- Check Supabase dashboard for DB connection issues
-- Verify health check endpoint returns 200
+### Health Endpoints
+- `GET /api/v1/health` -- Basic health (returns 200 if API is up)
+- `GET /api/v1/health/detailed` -- Component status (database, Redis, Anthropic key)
+
+### Key Metrics to Monitor
+- API response time (p50, p95, p99)
+- Error rate (5xx responses)
+- Database connection pool utilization
+- Redis memory usage
+- Celery task queue depth
+- ABC log creation latency (< 500ms target)

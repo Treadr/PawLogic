@@ -4,59 +4,90 @@
 
 ```
 ┌─────────────────────────────────────────────────────────────────┐
-│                        MOBILE APP                                │
-│                    React Native (Expo)                            │
-│  ┌──────────┐  ┌──────────┐  ┌──────────┐  ┌──────────────┐    │
-│  │ Auth Flow│  │ABC Logger│  │Dashboard │  │Progress View │    │
-│  └────┬─────┘  └────┬─────┘  └────┬─────┘  └──────┬───────┘    │
-│       │              │              │               │            │
-│  ┌────┴──────────────┴──────────────┴───────────────┴────────┐  │
-│  │                    API Client (httpx)                       │  │
-│  │            + Supabase Client (auth, storage)               │  │
-│  └────────────────────────┬──────────────────────────────────┘  │
-└───────────────────────────┼──────────────────────────────────────┘
-                            │ HTTPS
-                            ▼
+│                     WEB FRONTEND (port 3000)                    │
+│                  React 19 + Vite 7 + TypeScript                 │
+│  ┌──────────┐  ┌──────────┐  ┌──────────┐  ┌──────────────┐   │
+│  │ Auth Flow│  │ABC Wizard│  │Dashboard │  │Progress Page │   │
+│  └────┬─────┘  └────┬─────┘  └────┬─────┘  └──────┬───────┘   │
+│       └──────────────┴─────────────┴───────────────┘           │
+│              API service layer (fetch + /api proxy)             │
+└────────────────────────────┬────────────────────────────────────┘
+                             │ nginx proxies /api → backend
+┌────────────────────────────┼────────────────────────────────────┐
+│                     MOBILE APP (Expo)                           │
+│                  React Native + TypeScript                      │
+│  ┌──────────┐  ┌──────────┐  ┌──────────┐  ┌──────────────┐   │
+│  │ Auth Flow│  │ABC Logger│  │Dashboard │  │Progress View │   │
+│  └────┬─────┘  └────┬─────┘  └────┬─────┘  └──────┬───────┘   │
+│       └──────────────┴─────────────┴───────────────┘           │
+│              Typed service layer (fetch)                        │
+└────────────────────────────┬────────────────────────────────────┘
+                             │ HTTPS
+                             ▼
 ┌───────────────────────────────────────────────────────────────────┐
-│                        BACKEND API                                 │
-│                     FastAPI (Python 3.12+)                         │
-│                                                                    │
-│  ┌─────────────────────────────────────────────────────────────┐  │
-│  │                    Middleware Layer                           │  │
-│  │     JWT Auth  │  Rate Limiting  │  CORS  │  Error Handler   │  │
-│  └──────────┬──────────────────────────────────────────────────┘  │
-│             │                                                      │
-│  ┌──────────▼──────────────────────────────────────────────────┐  │
-│  │                    API Router (v1)                            │  │
-│  │  /auth  /pets  /abc-logs  /insights  /progress  /households │  │
-│  └──────────┬──────────────────────────────────────────────────┘  │
-│             │                                                      │
-│  ┌──────────▼──────────────────────────────────────────────────┐  │
-│  │                    Service Layer                              │  │
-│  │  ┌────────────┐  ┌────────────┐  ┌──────────────────────┐  │  │
-│  │  │ABC Analyzer│  │AI Service  │  │Analytics Service     │  │  │
-│  │  │            │  │(Claude API)│  │(Pandas/NumPy)        │  │  │
-│  │  └────────────┘  └─────┬──────┘  └──────────────────────┘  │  │
-│  └─────────────────────────┼───────────────────────────────────┘  │
-│             │               │                                      │
-│  ┌──────────▼───────┐      │     ┌─────────────────────────────┐  │
-│  │  SQLAlchemy ORM  │      │     │  Celery Workers             │  │
-│  │  (async)         │      │     │  (background AI analysis)   │  │
-│  └──────────┬───────┘      │     └─────────────┬───────────────┘  │
-└─────────────┼──────────────┼───────────────────┼──────────────────┘
-              │              │                   │
-              ▼              ▼                   ▼
+│                     BACKEND API (port 8000)                       │
+│                  FastAPI + Python 3.12 + async                    │
+│                                                                   │
+│  ┌─────────────────────────────────────────────────────────────┐ │
+│  │                    Middleware Layer                           │ │
+│  │     JWT Auth  │  Request Logging  │  CORS  │  Error Handler │ │
+│  └──────────┬──────────────────────────────────────────────────┘ │
+│             │                                                     │
+│  ┌──────────▼──────────────────────────────────────────────────┐ │
+│  │                    API Router (v1)                            │ │
+│  │  /auth  /pets  /abc-logs  /insights  /progress  /analysis   │ │
+│  │  /health  /coaching                                          │ │
+│  └──────────┬──────────────────────────────────────────────────┘ │
+│             │                                                     │
+│  ┌──────────▼──────────────────────────────────────────────────┐ │
+│  │                    Service Layer                              │ │
+│  │  ┌────────────────┐  ┌────────────┐  ┌──────────────────┐  │ │
+│  │  │Pattern Detector│  │AI Coaching │  │Progress Stats    │  │ │
+│  │  │(rule-based)    │  │(Claude API)│  │(SQL aggregation) │  │ │
+│  │  └────────────────┘  └─────┬──────┘  └──────────────────┘  │ │
+│  └─────────────────────────────┼───────────────────────────────┘ │
+│             │                   │                                  │
+│  ┌──────────▼───────┐          │     ┌─────────────────────────┐ │
+│  │  SQLAlchemy ORM  │          │     │  Celery Workers         │ │
+│  │  (async 2.0)     │          │     │  (background analysis)  │ │
+│  └──────────┬───────┘          │     └─────────────┬───────────┘ │
+└─────────────┼──────────────────┼───────────────────┼─────────────┘
+              │                  │                   │
+              ▼                  ▼                   ▼
 ┌─────────────────────┐ ┌────────────┐  ┌──────────────┐
-│  PostgreSQL          │ │ Anthropic  │  │ Redis        │
-│  (Supabase)          │ │ Claude API │  │ (task queue) │
-│                      │ │            │  │              │
-│  - Users             │ │ - Patterns │  │ - Job queue  │
-│  - Pets              │ │ - Functions│  │ - Cache      │
-│  - ABC Logs          │ │ - BIPs     │  │ - Rate limit │
-│  - Insights          │ │ - Reports  │  │              │
-│  - BIPs              │ │            │  │              │
-│  - Households        │ │            │  │              │
+│  PostgreSQL 17      │ │ Anthropic  │  │ Redis 7      │
+│                     │ │ Claude API │  │              │
+│  - users            │ │            │  │ - Task queue │
+│  - pets             │ │ - Coaching │  │ - Celery     │
+│  - abc_logs         │ │   (Haiku)  │  │   broker     │
+│  - insights         │ │            │  │              │
 └─────────────────────┘ └────────────┘  └──────────────┘
+```
+
+## Docker Compose Services
+
+```
+┌─────────────────────────────────────────────────────────────┐
+│                    docker-compose.yml                        │
+│                                                             │
+│  ┌───────────┐  ┌───────────┐  ┌───────────┐              │
+│  │ db        │  │ redis     │  │ api       │              │
+│  │ :5433     │  │ :6379     │  │ :8000     │              │
+│  │ postgres  │  │ redis 7   │  │ FastAPI   │              │
+│  │ 17-alpine │  │ alpine    │  │ + uvicorn │              │
+│  └─────┬─────┘  └─────┬─────┘  └─────┬─────┘              │
+│        │               │              │                     │
+│        │               │    ┌─────────┴─────────┐          │
+│        │               │    │ worker            │          │
+│        │               │    │ Celery            │          │
+│        │               │    └───────────────────┘          │
+│        │               │                                    │
+│  ┌─────┴───────────────┴────────────────────────┐          │
+│  │ frontend                                      │          │
+│  │ :3000  nginx (serves built React app)         │          │
+│  │ proxies /api/* → api:8000                     │          │
+│  └───────────────────────────────────────────────┘          │
+└─────────────────────────────────────────────────────────────┘
 ```
 
 ## Data Flow: ABC Log → Insight
@@ -66,13 +97,13 @@ User taps "Log Incident"
         │
         ▼
 ┌─────────────────┐
-│ ABC Logging Flow│  Mobile (3-step guided flow)
-│ A → B → C       │
+│ ABC Logging Flow│  Mobile (4-step wizard) or Web (multi-step form)
+│ A → B → C → ✓  │
 └────────┬────────┘
          │ POST /api/v1/pets/{id}/abc-logs
          ▼
 ┌─────────────────┐
-│ API Endpoint    │  Validates input, stores in DB
+│ API Endpoint    │  Validates taxonomy, stores in DB
 └────────┬────────┘
          │
          ├──────────────────────────────┐
@@ -84,31 +115,21 @@ User taps "Log Incident"
                                       │ Yes
                                       ▼
                              ┌─────────────────────┐
-                             │ Celery Background    │
-                             │ Job: Analyze         │
+                             │ Pattern Detection    │
+                             │ (rule-based engine)  │
                              └────────┬────────────┘
                                       │
                           ┌───────────┴───────────┐
                           ▼                       ▼
                  ┌─────────────────┐    ┌─────────────────┐
-                 │ Analytics       │    │ AI Service       │
-                 │ (Pandas)        │    │ (Claude API)     │
-                 │                 │    │                  │
-                 │ - Pair freq     │───>│ - Pattern prompt │
-                 │ - Trends        │    │ - Function ID    │
-                 │ - Temporal      │    │ - Plain English  │
+                 │ A-B Pair Freq  │    │ Severity Trends  │
+                 │ B-C Correlation│    │ Function Assess  │
                  └─────────────────┘    └────────┬────────┘
                                                  │
                                                  ▼
                                         ┌─────────────────┐
-                                        │ Store Insight    │
+                                        │ Store Insights   │
                                         │ in PostgreSQL    │
-                                        └────────┬────────┘
-                                                 │
-                                                 ▼
-                                        ┌─────────────────┐
-                                        │ Push Notification│
-                                        │ "New insight!"   │
                                         └────────┬────────┘
                                                  │
                                                  ▼
@@ -118,110 +139,126 @@ User taps "Log Incident"
                                         └─────────────────┘
 ```
 
-## Authentication Flow
+## Authentication Flow (Current: Dev JWT)
 
 ```
-┌─────────┐     ┌──────────────┐     ┌──────────────┐
-│ Mobile  │     │ Supabase Auth│     │ FastAPI      │
-│ App     │     │              │     │ Backend      │
-└────┬────┘     └──────┬───────┘     └──────┬───────┘
-     │                 │                     │
-     │  signUp(email)  │                     │
-     │────────────────>│                     │
-     │                 │                     │
-     │  JWT + refresh  │                     │
-     │<────────────────│                     │
-     │                 │                     │
-     │  Store in SecureStore                 │
+┌─────────┐                           ┌──────────────┐
+│ Client  │                           │ FastAPI      │
+│ (Web/   │                           │ Backend      │
+│  Mobile)│                           └──────┬───────┘
+└────┬────┘                                  │
      │                                       │
-     │  API request + Authorization: Bearer JWT
+     │  POST /api/v1/auth/verify             │
+     │  Authorization: Bearer <dev-token>    │
      │──────────────────────────────────────>│
      │                                       │
-     │                      Verify JWT secret│
+     │                      Decode JWT       │
      │                      Extract user_id  │
-     │                      Check/create user│
+     │                      ensure_db_user() │
+     │                      (auto-provision) │
      │                                       │
-     │  Response                             │
+     │  {"user_id": "...", "email": "..."}  │
      │<──────────────────────────────────────│
 ```
 
-## Project Directory Structure (Full)
+## Project Directory Structure
+
 ```
 PawLogic/
-├── CLAUDE.md                    # Project spec & conventions
-├── docs/                        # Documentation
-│   ├── ABA_Pet_Behavior_App_Overview.pdf
-│   ├── architecture.md          # This file
-│   ├── api-spec.md
-│   ├── database-schema.md
-│   ├── testing-strategy.md
-│   ├── deployment-guide.md
-│   ├── debugging-playbook.md
-│   ├── development-workflow.md
-│   ├── environment-setup.md
-│   ├── progress-tracker.md
-│   └── session-notes/
-├── skills/                      # Agent skill definitions
-├── agents/                      # Agent role definitions
-├── mobile/                      # React Native (Expo) app
-│   ├── src/
-│   │   ├── components/
-│   │   ├── screens/
-│   │   ├── navigation/
-│   │   ├── hooks/
-│   │   ├── services/
-│   │   ├── stores/
-│   │   ├── types/
-│   │   ├── constants/
-│   │   └── utils/
-│   ├── __tests__/
-│   ├── assets/
-│   ├── app.json
-│   ├── eas.json
-│   ├── tsconfig.json
-│   └── package.json
-├── backend/                     # FastAPI backend
-│   ├── app/
-│   │   ├── api/v1/endpoints/
-│   │   ├── models/
-│   │   ├── schemas/
-│   │   ├── services/
-│   │   ├── middleware/
-│   │   ├── db/
-│   │   ├── core/
-│   │   ├── workers/
-│   │   ├── prompts/
-│   │   ├── main.py
-│   │   └── config.py
-│   ├── alembic/
-│   ├── tests/
-│   ├── Dockerfile
-│   ├── Dockerfile.worker
-│   ├── requirements.txt
-│   └── requirements-dev.txt
-├── docker-compose.yml
+├── CLAUDE.md                        # Project spec & conventions
+├── docker-compose.yml               # Full-stack local deployment
+├── docs/                            # Documentation
+│   ├── architecture.md              # This file
+│   ├── api-spec.md                  # API endpoint reference
+│   ├── database-schema.md           # ERD and table definitions
+│   ├── progress-tracker.md          # What's built + next steps
+│   ├── environment-setup.md         # Dev environment setup guide
+│   ├── deployment-guide.md          # Deployment procedures
+│   ├── development-workflow.md      # Git workflow + conventions
+│   ├── testing-strategy.md          # Testing approach
+│   └── debugging-playbook.md        # Common issue resolution
 ├── .github/workflows/
-├── .env.example
-└── .gitignore
+│   ├── backend-ci.yml               # Ruff lint + pytest (path: backend/**)
+│   ├── mobile-ci.yml                # TypeScript check (path: mobile/**)
+│   └── frontend-ci.yml             # ESLint + Vite build (path: frontend/**)
+│
+├── backend/                         # FastAPI backend
+│   ├── app/
+│   │   ├── api/v1/endpoints/        # auth, pets, abc_logs, insights, progress,
+│   │   │                            #   analysis, coaching, health
+│   │   ├── models/                  # SQLAlchemy models (user, pet, abc_log, insight)
+│   │   ├── schemas/                 # Pydantic request/response schemas
+│   │   ├── services/                # pattern_detection, coaching_service
+│   │   ├── middleware/              # request_logging
+│   │   ├── core/                    # security, taxonomy, exceptions, config
+│   │   ├── db/                      # session, base
+│   │   ├── workers/                 # Celery tasks (analyze_patterns)
+│   │   ├── main.py                  # FastAPI app factory
+│   │   └── config.py               # Pydantic Settings
+│   ├── alembic/                     # Database migrations
+│   ├── tests/                       # pytest test suite (~30 tests)
+│   ├── scripts/                     # seed_data.py
+│   ├── Dockerfile                   # API container
+│   ├── Dockerfile.worker            # Celery worker container
+│   ├── entrypoint.sh                # Runs migrations on startup
+│   ├── requirements.txt             # Production dependencies
+│   ├── requirements-dev.txt         # Dev/test dependencies
+│   ├── .env                         # Local environment (gitignored)
+│   └── .env.example                 # Template with documentation
+│
+├── frontend/                        # React web frontend
+│   ├── src/
+│   │   ├── pages/                   # 13 pages (Login, Dashboard, ABC*, Pet*, etc.)
+│   │   ├── components/              # ChipSelector, ErrorBanner, Layout, etc.
+│   │   ├── context/                 # AuthContext, PetContext
+│   │   ├── services/                # API client (pets, abcLogs, insights, etc.)
+│   │   ├── hooks/                   # Custom React hooks
+│   │   ├── types/                   # TypeScript type definitions
+│   │   ├── App.tsx                  # Router + layout
+│   │   └── main.tsx                 # Entry point
+│   ├── Dockerfile                   # Multi-stage: Node build → nginx serve
+│   ├── nginx.conf                   # SPA routing + /api proxy
+│   ├── vite.config.ts               # Port 3000, API proxy, chunk splitting
+│   ├── eslint.config.js             # Flat config with TS + React plugins
+│   └── tsconfig.json                # Strict TypeScript
+│
+├── mobile/                          # React Native (Expo) app
+│   ├── src/
+│   │   ├── screens/                 # 14 screens across auth, home, pets, abc, etc.
+│   │   ├── components/              # ErrorBoundary, ErrorBanner, ChipSelector, etc.
+│   │   ├── navigation/              # AppNavigator (stack-based)
+│   │   ├── services/                # Typed API client layer
+│   │   ├── hooks/                   # useApiCall, useFocusRefresh
+│   │   ├── constants/               # Brand colors, typography
+│   │   └── types/                   # TypeScript interfaces
+│   ├── App.tsx                      # Root with ErrorBoundary
+│   └── app.json                     # Expo config
+│
+├── skills/                          # Agent skill definitions (13 files)
+└── agents/                          # Agent role definitions (10 files)
 ```
 
-## Technology Decisions & Rationale
+## Technology Stack (Implemented)
 
-| Decision | Choice | Rationale | Alternatives Considered |
-|----------|--------|-----------|------------------------|
-| Mobile framework | React Native (Expo) | Cross-platform, existing React skills | Flutter, native iOS/Android |
-| Backend framework | FastAPI | Async, Python AI ecosystem, existing skills | Django REST, Express.js |
-| Database | PostgreSQL (Supabase) | Auth + DB + storage in one, managed | Firebase, raw PostgreSQL, MongoDB |
-| AI provider | Anthropic Claude | Strong reasoning, structured output | OpenAI GPT-4, local models |
-| State management | Zustand | Lightweight, TypeScript-first | Redux, MobX, React Context |
-| Charts | Victory Native | React Native native, good perf | Recharts (web only), D3 |
-| Task queue | Celery + Redis | Proven, Python native | Dramatiq, Huey, RQ |
-| Push notifications | Expo + OneSignal | Easy integration, good analytics | Firebase Cloud Messaging only |
+| Layer | Technology | Version | Notes |
+|-------|-----------|---------|-------|
+| Web Frontend | React + Vite | 19.2 / 7.3 | TypeScript, Recharts, React Router |
+| Mobile App | React Native (Expo) | SDK 54 | TypeScript, React Navigation |
+| Backend API | FastAPI | Latest | async SQLAlchemy 2.0 + asyncpg |
+| Database | PostgreSQL | 17 (Alpine) | Docker, port 5433 |
+| AI | Anthropic Claude | Haiku | Coaching; pattern detection is rule-based |
+| Task Queue | Celery + Redis | 7 (Alpine) | Background analysis jobs |
+| Frontend Serve | nginx | Alpine | SPA routing + API reverse proxy |
+| CI | GitHub Actions | -- | 3 workflows, path-filtered |
 
-## Scaling Considerations (Post-MVP)
-- **API:** Horizontal scaling via container replicas (Railway/ECS)
-- **Database:** Supabase handles connection pooling; read replicas if needed
-- **AI:** Background queue absorbs load spikes; rate limiting per user tier
-- **Caching:** Redis for analytics results, user session data
-- **CDN:** CloudFront for static assets if needed
-- **File storage:** S3 (or Supabase Storage) for pet photos and reports
+## Key Design Decisions
+
+| Decision | Choice | Rationale |
+|----------|--------|-----------|
+| Pattern detection | Rule-based (not AI) | Deterministic, fast, no API cost; AI reserved for coaching |
+| Auth | Dev JWT tokens | MVP simplicity; production will use Supabase Auth or similar |
+| Frontend serving | nginx reverse proxy | Single entry point; /api proxied to backend transparently |
+| Database | Single migration | All core tables in one migration for MVP simplicity |
+| Charts (web) | Recharts | React-native web lib; good for web dashboards |
+| Charts (mobile) | Custom components | Lightweight; Victory Native planned for Phase 2 |
+| Docker networking | Service name overrides | .env stays localhost for local dev; docker-compose overrides for containers |

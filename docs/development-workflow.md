@@ -1,55 +1,18 @@
 # PawLogic Development Workflow
 
-## Git Branching Strategy
+## Git Strategy
 
-### Branch Structure
+### Current Approach (MVP)
+All work is committed directly to `main` during rapid MVP development. Once the team grows or the app is in production, switch to the branching model below.
+
+### Branch Structure (Post-MVP)
 ```
 main                    # Production-ready code. Protected branch.
-├── develop             # Integration branch. All features merge here first.
-│   ├── feature/abc-logging-flow    # Feature branches
-│   ├── feature/pet-profile-crud
-│   ├── feature/ai-pattern-detection
-│   ├── fix/auth-token-refresh
-│   └── chore/update-dependencies
+├── feature/abc-logging-flow    # Feature branches
+├── feature/multi-pet-support
+├── fix/auth-token-refresh
+└── chore/update-dependencies
 ```
-
-### Branch Naming Convention
-```
-feature/short-description    # New features
-fix/short-description        # Bug fixes
-chore/short-description      # Maintenance, deps, CI
-docs/short-description       # Documentation only
-refactor/short-description   # Code restructuring
-```
-
-### Merge Flow
-```
-feature/* → develop (via PR, requires review)
-develop → main (via PR, requires tests passing + review)
-```
-
-## Development Cycle
-
-### Starting a Feature
-```bash
-# 1. Create branch from develop
-git checkout develop && git pull
-git checkout -b feature/abc-logging-flow
-
-# 2. Work in small, focused commits
-git add specific-files.py
-git commit -m "Add ABC log Pydantic schemas"
-
-# 3. Push and create PR when ready
-git push -u origin feature/abc-logging-flow
-gh pr create --base develop --title "Add ABC logging flow" --body "..."
-```
-
-### PR Requirements
-- All CI checks passing (lint + tests)
-- At least one review (code-review-agent or human)
-- No merge conflicts with develop
-- PR description includes what changed and why
 
 ### Commit Message Format
 ```
@@ -62,131 +25,92 @@ Co-Authored-By: Claude Opus 4.6 <noreply@anthropic.com>
 
 **Types:** `feat`, `fix`, `chore`, `docs`, `refactor`, `test`, `style`
 
-**Examples:**
-```
-feat: add ABC log creation endpoint with validation
-fix: resolve JWT expiry not triggering token refresh
-chore: update FastAPI to 0.115.2
-test: add integration tests for pet CRUD endpoints
-```
+## CI/CD Pipeline
 
-## Multi-Agent Workflow
+Three GitHub Actions workflows, each path-filtered to only run when relevant files change:
 
-### Feature Development Flow
-```
-1. ORCHESTRATOR receives feature request
-   └── Decomposes into layer-specific tasks
-       ├── DATABASE-AGENT: schema + migration
-       ├── BACKEND-AGENT: endpoints + services
-       ├── AI-AGENT: prompts + AI service (if AI feature)
-       ├── FRONTEND-AGENT: screens + components
-       ├── TESTING-AGENT: tests for each layer
-       └── CODE-REVIEW-AGENT: review all changes
+| Workflow | Trigger | Jobs |
+|----------|---------|------|
+| `backend-ci.yml` | `backend/**` changes | Ruff lint + format, pytest with DB/Redis |
+| `mobile-ci.yml` | `mobile/**` changes | TypeScript check (`tsc --noEmit`) |
+| `frontend-ci.yml` | `frontend/**` changes | ESLint, TypeScript + Vite build |
 
-2. Execution order (respecting dependencies):
-   Step 1: database-agent (schema must exist first)
-   Step 2: backend-agent + ai-agent (can parallel after schema)
-   Step 3: frontend-agent (after API contract defined)
-   Step 4: testing-agent (after each layer completes)
-   Step 5: code-review-agent (after all code complete)
-   Step 6: devops-agent (deployment after review passes)
-```
+### Running CI Checks Locally
 
-### Agent Handoff Protocol
-When one agent completes work that another depends on:
-1. Completing agent updates the session notes with status
-2. Completing agent lists files created/modified
-3. Next agent reads those files before starting work
-4. Any conflicts or questions go to orchestrator
-
-## Local Development Setup
-
-### Prerequisites
-- Node.js 20+
-- Python 3.12+
-- Docker Desktop
-- Expo CLI (`npm install -g expo-cli`)
-- Supabase CLI (`npm install -g supabase`)
-- Railway CLI (`npm install -g @railway/cli`)
-
-### First-Time Setup
 ```bash
-# Clone repo
-git clone <repo-url> && cd PawLogic
-
-# Backend setup
+# Backend
 cd backend
-python -m venv venv
-source venv/bin/activate  # or venv\Scripts\activate on Windows
-pip install -r requirements-dev.txt
-cp .env.example .env      # Edit with your credentials
+ruff check app/              # Lint
+ruff format --check app/     # Format check
+pytest tests/ -v --tb=short  # Tests (requires DB + Redis)
 
-# Mobile setup
-cd ../mobile
-npm install
+# Frontend
+cd frontend
+npm run lint                 # ESLint
+npm run build               # TypeScript + Vite build
 
-# Start local services
-cd ..
-docker-compose up -d      # Redis
-supabase start            # Local Supabase
+# Mobile
+cd mobile
+npx tsc --noEmit            # TypeScript check
+```
 
-# Start development servers
-# Terminal 1: Backend
-cd backend && uvicorn app.main:app --reload --port 8000
+## Development Setup
 
-# Terminal 2: Mobile
+### Quick Start (Docker)
+```bash
+docker compose up -d
+# API: http://localhost:8000  |  Web: http://localhost:3000
+```
+
+### Local Development (Hot-Reload)
+```bash
+# Infrastructure
+docker compose up -d db redis
+
+# Backend (Terminal 1)
+cd backend && source venv/bin/activate && uvicorn app.main:app --reload --port 8000
+
+# Frontend (Terminal 2)
+cd frontend && npm run dev
+
+# Mobile (Terminal 3)
 cd mobile && npx expo start
 ```
 
-### Daily Development
-```bash
-# Pull latest changes
-git checkout develop && git pull
+## Project Conventions
 
-# Start services
-docker-compose up -d
-cd backend && uvicorn app.main:app --reload --port 8000  # Terminal 1
-cd mobile && npx expo start                              # Terminal 2
+### Backend (Python)
+- **Linter:** Ruff (B008 excluded for FastAPI Depends pattern)
+- **ORM:** SQLAlchemy 2.0 async with asyncpg
+- **Schemas:** Pydantic v2 for request/response validation
+- **Tests:** pytest + pytest-asyncio + httpx (async test client)
+- **Migrations:** Alembic (auto-run on Docker startup via entrypoint.sh)
+- **Excluded from lint:** `alembic/` directory
 
-# Run tests before committing
-cd backend && pytest tests/ -v
-cd mobile && npx jest
-```
+### Frontend (React/TypeScript)
+- **Build:** Vite 7 with React plugin
+- **Lint:** ESLint 9 (flat config) with TypeScript + React Hooks plugins
+- **Charts:** Recharts
+- **Routing:** React Router v7
+- **State:** React Context (AuthContext, PetContext)
+- **API:** Service layer with typed fetch wrappers
 
-## Code Quality Gates
+### Mobile (React Native/Expo)
+- **SDK:** Expo 54
+- **Navigation:** React Navigation (stack-based)
+- **State:** React Context + custom hooks
+- **API:** Typed service layer matching frontend pattern
+- **Brand:** Teal (#0D9E85) primary, coral (#FF7759) accent
 
-### Pre-Commit (Local)
-- Linting passes (ruff for Python, ESLint for TypeScript)
-- Type checking passes (mypy for Python, tsc for TypeScript)
-- Formatting correct (ruff format, Prettier)
+### Database
+- **TIMESTAMP WITHOUT TIME ZONE** -- always strip tzinfo before insert
+- **UUID primary keys** on all tables
+- **Ownership validation** via user_id FK on all user-facing tables
+- **ensure_db_user** dependency auto-provisions users on first API call
 
-### CI Pipeline (GitHub Actions)
-- All above checks
-- All tests pass
-- Coverage meets minimum thresholds
-- No new security vulnerabilities (npm audit, pip audit)
-
-### Pre-Deploy
-- All CI checks pass
-- PR reviewed and approved
-- Staging environment tested (for production deploys)
-
-## Environment Matrix
-
-| Environment | Backend URL | Database | AI API | Purpose |
-|-------------|-------------|----------|--------|---------|
-| Local | localhost:8000 | Supabase local | Real API (dev key) | Development |
-| CI | Ephemeral | PostgreSQL (GitHub Actions) | Mocked | Automated testing |
-| Staging | Railway staging | Supabase staging | Real API (staging key) | Pre-production |
-| Production | Railway prod | Supabase prod | Real API (prod key) | Live users |
-
-## Definition of Done (per feature)
-- [ ] Code complete and working locally
-- [ ] Unit tests written and passing
-- [ ] Integration tests written and passing (if applicable)
-- [ ] Linting and type checking passing
-- [ ] PR created with clear description
-- [ ] Code reviewed and approved
-- [ ] Merged to develop
-- [ ] Verified on staging (for significant features)
-- [ ] Session notes updated with status
+### API Design
+- All endpoints under `/api/v1/`
+- JWT auth required on all endpoints except `/health`
+- Pet ownership verified before any pet-scoped operation
+- ABC taxonomy validated against `core/taxonomy.py` categories
+- Responses return model objects directly (FastAPI serialization)
