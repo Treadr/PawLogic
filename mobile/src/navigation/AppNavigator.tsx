@@ -13,6 +13,7 @@ import ABCLogListScreen from '../screens/abc/ABCLogListScreen';
 import InsightsScreen from '../screens/insights/InsightsScreen';
 import PetDetailScreen from '../screens/pets/PetDetailScreen';
 import ProgressScreen from '../screens/progress/ProgressScreen';
+import EditPetScreen from '../screens/pets/EditPetScreen';
 import CoachingScreen from '../screens/coaching/CoachingScreen';
 import SettingsScreen from '../screens/settings/SettingsScreen';
 import { restoreSession } from '../services/auth';
@@ -23,6 +24,7 @@ export type RootStackParamList = {
   PetList: undefined;
   AddPet: undefined;
   PetDetail: { petId: string };
+  EditPet: { petId: string };
   ABCLog: { petId: string; petName: string; species: string };
   ABCLogList: { petId: string; petName: string };
   Insights: { petId: string; petName: string };
@@ -96,6 +98,11 @@ export default function AppNavigator() {
           name="PetDetail"
           component={PetDetailScreen}
           options={{ title: 'Pet Profile' }}
+        />
+        <Stack.Screen
+          name="EditPet"
+          component={EditPetScreen}
+          options={{ title: 'Edit Pet' }}
         />
         <Stack.Screen
           name="ABCLog"

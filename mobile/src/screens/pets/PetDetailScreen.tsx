@@ -92,6 +92,12 @@ export default function PetDetailScreen({ route, navigation }: Props) {
               <Text style={styles.badge}>Neutered/Spayed</Text>
             )}
           </View>
+          <TouchableOpacity
+            style={styles.editBtn}
+            onPress={() => navigation.navigate('EditPet', { petId: pet.id })}
+          >
+            <Text style={styles.editBtnText}>Edit</Text>
+          </TouchableOpacity>
         </View>
       </View>
 
@@ -258,7 +264,7 @@ const styles = StyleSheet.create({
     marginRight: spacing.lg,
   },
   avatarText: { fontSize: 32 },
-  petInfo: { flex: 1 },
+  petInfo: { flex: 1, marginRight: spacing.sm },
   petName: {
     fontSize: fontSize['2xl'],
     fontWeight: '700',
@@ -279,6 +285,18 @@ const styles = StyleSheet.create({
     alignSelf: 'flex-start',
     marginTop: spacing.xs,
     overflow: 'hidden',
+  },
+  editBtn: {
+    paddingVertical: spacing.xs,
+    paddingHorizontal: spacing.md,
+    borderRadius: borderRadius.sm,
+    borderWidth: 1,
+    borderColor: colors.primary[300],
+  },
+  editBtnText: {
+    fontSize: fontSize.xs,
+    fontWeight: '600',
+    color: colors.primary[500],
   },
   statsGrid: {
     flexDirection: 'row',
