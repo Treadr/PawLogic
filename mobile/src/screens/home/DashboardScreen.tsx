@@ -12,7 +12,6 @@ import type { NativeStackScreenProps } from '@react-navigation/native-stack';
 
 import { colors } from '../../constants/colors';
 import { fontSize, spacing, borderRadius } from '../../constants/typography';
-import { logout } from '../../services/auth';
 import * as petService from '../../services/pets';
 import * as progressService from '../../services/progress';
 import type { Pet } from '../../types/pet';
@@ -56,11 +55,6 @@ export default function DashboardScreen({ navigation }: Props) {
     setRefreshing(true);
     await loadData();
     setRefreshing(false);
-  };
-
-  const handleLogout = async () => {
-    await logout();
-    navigation.reset({ index: 0, routes: [{ name: 'Login' }] });
   };
 
   return (
@@ -213,10 +207,6 @@ export default function DashboardScreen({ navigation }: Props) {
         })
       )}
 
-      {/* Logout */}
-      <TouchableOpacity style={styles.logoutBtn} onPress={handleLogout}>
-        <Text style={styles.logoutText}>Sign Out</Text>
-      </TouchableOpacity>
     </ScrollView>
   );
 }
@@ -297,10 +287,4 @@ const styles = StyleSheet.create({
   insightActionBtn: { borderColor: colors.accent[300], backgroundColor: colors.accent[50] },
   petActionText: { fontSize: fontSize.sm, fontWeight: '600', color: colors.primary[500] },
   insightActionText: { color: colors.accent[600] },
-  logoutBtn: {
-    margin: spacing.lg,
-    padding: spacing.md,
-    alignItems: 'center',
-  },
-  logoutText: { fontSize: fontSize.sm, color: colors.neutral[400] },
 });

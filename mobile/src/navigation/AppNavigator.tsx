@@ -1,5 +1,5 @@
 import React, { useEffect, useState } from 'react';
-import { ActivityIndicator, View } from 'react-native';
+import { ActivityIndicator, Text, TouchableOpacity, View } from 'react-native';
 import { NavigationContainer } from '@react-navigation/native';
 import { createNativeStackNavigator } from '@react-navigation/native-stack';
 
@@ -14,6 +14,7 @@ import InsightsScreen from '../screens/insights/InsightsScreen';
 import PetDetailScreen from '../screens/pets/PetDetailScreen';
 import ProgressScreen from '../screens/progress/ProgressScreen';
 import CoachingScreen from '../screens/coaching/CoachingScreen';
+import SettingsScreen from '../screens/settings/SettingsScreen';
 import { restoreSession } from '../services/auth';
 
 export type RootStackParamList = {
@@ -27,6 +28,7 @@ export type RootStackParamList = {
   Insights: { petId: string; petName: string };
   Progress: { petId: string; petName: string };
   Coaching: { petId: string; petName: string };
+  Settings: undefined;
 };
 
 const Stack = createNativeStackNavigator<RootStackParamList>();
@@ -68,7 +70,17 @@ export default function AppNavigator() {
         <Stack.Screen
           name="Dashboard"
           component={DashboardScreen}
-          options={{ title: 'PawLogic' }}
+          options={({ navigation: nav }) => ({
+            title: 'PawLogic',
+            headerRight: () => (
+              <TouchableOpacity
+                onPress={() => nav.navigate('Settings')}
+                hitSlop={{ top: 10, bottom: 10, left: 10, right: 10 }}
+              >
+                <Text style={{ color: '#fff', fontSize: 22 }}>{'\u2699'}</Text>
+              </TouchableOpacity>
+            ),
+          })}
         />
         <Stack.Screen
           name="PetList"
@@ -109,6 +121,11 @@ export default function AppNavigator() {
           name="Coaching"
           component={CoachingScreen}
           options={{ title: 'Behavior Coach' }}
+        />
+        <Stack.Screen
+          name="Settings"
+          component={SettingsScreen}
+          options={{ title: 'Settings' }}
         />
       </Stack.Navigator>
     </NavigationContainer>

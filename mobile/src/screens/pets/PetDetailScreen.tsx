@@ -1,6 +1,7 @@
 import React, { useCallback, useEffect, useState } from 'react';
 import {
   ActivityIndicator,
+  Alert,
   ScrollView,
   StyleSheet,
   Text,
@@ -199,6 +200,33 @@ export default function PetDetailScreen({ route, navigation }: Props) {
         >
           <Text style={styles.coachActionText}>Ask Behavior Coach</Text>
         </TouchableOpacity>
+
+        <TouchableOpacity
+          style={[styles.actionButton, styles.deleteAction]}
+          onPress={() =>
+            Alert.alert(
+              'Delete Pet',
+              `Are you sure you want to delete ${pet.name}? This will also remove all behavior logs and insights.`,
+              [
+                { text: 'Cancel', style: 'cancel' },
+                {
+                  text: 'Delete',
+                  style: 'destructive',
+                  onPress: async () => {
+                    try {
+                      await petService.deletePet(pet.id);
+                      navigation.goBack();
+                    } catch (err) {
+                      Alert.alert('Error', String(err));
+                    }
+                  },
+                },
+              ],
+            )
+          }
+        >
+          <Text style={styles.deleteActionText}>Delete Pet</Text>
+        </TouchableOpacity>
       </View>
     </ScrollView>
   );
@@ -321,5 +349,15 @@ const styles = StyleSheet.create({
     fontSize: fontSize.base,
     fontWeight: '600',
     color: colors.accent[600],
+  },
+  deleteAction: {
+    backgroundColor: colors.surface,
+    borderColor: colors.error,
+    marginTop: spacing.xl,
+  },
+  deleteActionText: {
+    fontSize: fontSize.base,
+    fontWeight: '600',
+    color: colors.error,
   },
 });
