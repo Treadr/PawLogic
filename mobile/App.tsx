@@ -1,5 +1,5 @@
-import DashboardScreen from './src/screens/home/DashboardScreen';
+import AppNavigator from './src/navigation/AppNavigator';
 
 export default function App() {
-  return <DashboardScreen />;
+  return <AppNavigator />;
 }

@@ -19,6 +19,7 @@ export interface ABCLog {
 }
 
 export interface ABCLogCreate {
+  pet_id: string;
   antecedent_category: string;
   antecedent_tags: string[];
   antecedent_notes?: string;
