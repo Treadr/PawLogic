@@ -256,7 +256,7 @@ const styles = StyleSheet.create({
   },
   tagA: { backgroundColor: colors.primary[50] },
   tagB: { backgroundColor: colors.accent[50] },
-  tagC: { backgroundColor: '#EFF6FF' },
+  tagC: { backgroundColor: colors.primary[50] },
   tagText: {
     fontSize: fontSize.xs,
     color: colors.neutral[600],

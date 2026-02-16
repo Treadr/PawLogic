@@ -1,24 +1,24 @@
 /* ── PawLogic Design System ────────────────────────── */
 :root {
-  --primary: #0D9E85;
-  --primary-dark: #0A7F6B;
-  --primary-light: #E6F7F4;
+  --primary: #6366F1;
+  --primary-dark: #4F46E5;
+  --primary-light: #EEF2FF;
   --accent: #FF7759;
   --accent-light: #FFF0EC;
 
-  --bg: #F5F7FA;
+  --bg: #FAFAF9;
   --bg-card: #FFFFFF;
-  --bg-sidebar: #0B2E27;
-  --bg-sidebar-hover: #0D3D33;
+  --bg-sidebar: #1E1B4B;
+  --bg-sidebar-hover: #312E81;
 
   --text: #1A2B3C;
   --text-secondary: #6B7B8D;
   --text-light: #9AABB8;
-  --text-sidebar: #B0C9C2;
+  --text-sidebar: #A5B4FC;
   --text-sidebar-active: #FFFFFF;
 
   --border: #E2E8F0;
-  --border-focus: #0D9E85;
+  --border-focus: #6366F1;
 
   --severity-1: #4CAF50;
   --severity-2: #8BC34A;
@@ -26,8 +26,8 @@
   --severity-4: #FF9800;
   --severity-5: #F44336;
 
-  --radius: 8px;
-  --radius-lg: 12px;
+  --radius: 10px;
+  --radius-lg: 16px;
   --shadow: 0 1px 3px rgba(0, 0, 0, 0.08);
   --shadow-lg: 0 4px 12px rgba(0, 0, 0, 0.12);
 
@@ -273,7 +273,7 @@ body {
 }
 
 .btn-accent:hover {
-  background: #E8603E;
+  background: #E0664D;
 }
 
 .btn-outline {
@@ -336,7 +336,7 @@ body {
 .form-group textarea:focus {
   outline: none;
   border-color: var(--border-focus);
-  box-shadow: 0 0 0 3px rgba(13, 158, 133, 0.12);
+  box-shadow: 0 0 0 3px rgba(99, 102, 241, 0.12);
 }
 
 .form-group textarea {
@@ -522,7 +522,7 @@ body {
   display: flex;
   align-items: center;
   justify-content: center;
-  background: linear-gradient(135deg, var(--bg-sidebar) 0%, #0D9E85 100%);
+  background: linear-gradient(135deg, var(--bg-sidebar) 0%, #6366F1 100%);
 }
 
 .login-card {

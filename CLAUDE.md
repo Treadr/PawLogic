@@ -103,7 +103,7 @@ Guided flow for logging incidents in under 30 seconds:
 
 ## Brand & Design Guidelines
 
-- **Color palette:** Teal/deep green (primary) + warm coral or amber (accent). Avoid primary blue and neon green.
+- **Color palette:** Deep indigo/navy (primary #6366F1) + warm coral (accent #FF7759). Warm stone neutrals.
 - **Typography:** Clean sans-serif (Inter, Plus Jakarta Sans, or similar). Friendly but geometric.
 - **Logo direction:** Minimalist mark combining subtle cat silhouette element with a data/logic element. Must work at app-icon size and monochrome.
 - **Tone:** Knowledgeable friend who happens to be a behavior scientist. Not clinical, not condescending, genuinely helpful and slightly witty.

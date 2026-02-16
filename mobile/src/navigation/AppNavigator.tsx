@@ -61,7 +61,7 @@ export default function AppNavigator() {
       <Stack.Navigator
         initialRouteName={isLoggedIn ? 'Dashboard' : 'Login'}
         screenOptions={{
-          headerStyle: { backgroundColor: colors.primary[500] },
+          headerStyle: { backgroundColor: colors.primary[800] },
           headerTintColor: '#fff',
           headerTitleStyle: { fontWeight: '600' },
         }}

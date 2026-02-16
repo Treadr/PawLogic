@@ -44,7 +44,7 @@ export default function LoginScreen({ navigation }: Props) {
       <View style={styles.hero}>
         <View style={styles.logoContainer}>
           <View style={styles.logoCircle}>
-            <Text style={styles.logoIcon}>P</Text>
+            <Text style={styles.logoIcon}>{'\uD83D\uDC3E'}</Text>
           </View>
         </View>
         <Text style={styles.appName}>PawLogic</Text>
@@ -116,8 +116,7 @@ const styles = StyleSheet.create({
     alignItems: 'center',
   },
   logoIcon: {
-    fontSize: 40,
-    fontWeight: '800',
+    fontSize: 38,
     color: '#fff',
   },
   appName: {
@@ -160,10 +159,10 @@ const styles = StyleSheet.create({
     padding: spacing['2xl'],
     borderRadius: borderRadius.xl,
     shadowColor: '#000',
-    shadowOffset: { width: 0, height: -2 },
-    shadowOpacity: 0.1,
-    shadowRadius: 8,
-    elevation: 5,
+    shadowOffset: { width: 0, height: -4 },
+    shadowOpacity: 0.08,
+    shadowRadius: 16,
+    elevation: 6,
   },
   formTitle: {
     fontSize: fontSize.xl,
