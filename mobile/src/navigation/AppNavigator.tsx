@@ -13,6 +13,7 @@ import ABCLogListScreen from '../screens/abc/ABCLogListScreen';
 import InsightsScreen from '../screens/insights/InsightsScreen';
 import PetDetailScreen from '../screens/pets/PetDetailScreen';
 import ProgressScreen from '../screens/progress/ProgressScreen';
+import CoachingScreen from '../screens/coaching/CoachingScreen';
 import { restoreSession } from '../services/auth';
 
 export type RootStackParamList = {
@@ -25,6 +26,7 @@ export type RootStackParamList = {
   ABCLogList: { petId: string; petName: string };
   Insights: { petId: string; petName: string };
   Progress: { petId: string; petName: string };
+  Coaching: { petId: string; petName: string };
 };
 
 const Stack = createNativeStackNavigator<RootStackParamList>();
@@ -102,6 +104,11 @@ export default function AppNavigator() {
           name="Progress"
           component={ProgressScreen}
           options={{ title: 'Progress' }}
+        />
+        <Stack.Screen
+          name="Coaching"
+          component={CoachingScreen}
+          options={{ title: 'Behavior Coach' }}
         />
       </Stack.Navigator>
     </NavigationContainer>

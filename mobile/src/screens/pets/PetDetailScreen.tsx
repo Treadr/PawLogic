@@ -187,6 +187,18 @@ export default function PetDetailScreen({ route, navigation }: Props) {
         >
           <Text style={styles.actionText}>Progress Charts</Text>
         </TouchableOpacity>
+
+        <TouchableOpacity
+          style={[styles.actionButton, styles.coachAction]}
+          onPress={() =>
+            navigation.navigate('Coaching', {
+              petId: pet.id,
+              petName: pet.name,
+            })
+          }
+        >
+          <Text style={styles.coachActionText}>Ask Behavior Coach</Text>
+        </TouchableOpacity>
       </View>
     </ScrollView>
   );
@@ -300,5 +312,14 @@ const styles = StyleSheet.create({
     fontSize: fontSize.base,
     fontWeight: '600',
     color: colors.primary[600],
+  },
+  coachAction: {
+    backgroundColor: colors.accent[50],
+    borderColor: colors.accent[300],
+  },
+  coachActionText: {
+    fontSize: fontSize.base,
+    fontWeight: '600',
+    color: colors.accent[600],
   },
 });

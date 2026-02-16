@@ -13,6 +13,24 @@ export interface PatternResult {
   }[];
 }
 
+export interface CoachingResult {
+  pet_id: string;
+  question: string;
+  response: string;
+  model: string;
+  log_count: number;
+}
+
 export async function detectPatterns(petId: string): Promise<PatternResult> {
   return api.post<PatternResult>(`/analysis/detect-patterns?pet_id=${petId}`, {});
+}
+
+export async function askCoaching(
+  petId: string,
+  question: string,
+): Promise<CoachingResult> {
+  return api.post<CoachingResult>('/analysis/coaching', {
+    pet_id: petId,
+    question,
+  });
 }
