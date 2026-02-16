@@ -12,14 +12,10 @@ class Pet(Base):
     __tablename__ = "pets"
     __table_args__ = (
         CheckConstraint("species IN ('cat', 'dog')", name="ck_pets_species"),
-        CheckConstraint(
-            "sex IN ('male', 'female', 'unknown')", name="ck_pets_sex"
-        ),
+        CheckConstraint("sex IN ('male', 'female', 'unknown')", name="ck_pets_sex"),
     )
 
-    id: Mapped[uuid.UUID] = mapped_column(
-        UUID(as_uuid=True), primary_key=True, default=uuid.uuid4
-    )
+    id: Mapped[uuid.UUID] = mapped_column(UUID(as_uuid=True), primary_key=True, default=uuid.uuid4)
     user_id: Mapped[uuid.UUID] = mapped_column(
         UUID(as_uuid=True),
         ForeignKey("users.id", ondelete="CASCADE"),
@@ -37,9 +33,7 @@ class Pet(Base):
     temperament: Mapped[list[str] | None] = mapped_column(ARRAY(String(50)))
     medical_notes: Mapped[str | None] = mapped_column()
     photo_url: Mapped[str | None] = mapped_column(String(500))
-    created_at: Mapped[datetime] = mapped_column(
-        nullable=False, server_default=text("NOW()")
-    )
+    created_at: Mapped[datetime] = mapped_column(nullable=False, server_default=text("NOW()"))
     updated_at: Mapped[datetime] = mapped_column(
         nullable=False, server_default=text("NOW()"), onupdate=datetime.now
     )

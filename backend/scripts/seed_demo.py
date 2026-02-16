@@ -320,10 +320,12 @@ async def seed(reset: bool = False) -> None:
     await engine.dispose()
     print("\nSeed complete! Demo user credentials:")
     print(f"  User ID: {DEMO_USER_ID}")
-    print(f"  Email:   demo@pawlogic.app")
+    print("  Email:   demo@pawlogic.app")
     print(f"  Cat:     Whiskers ({DEMO_CAT_ID})")
     print(f"  Dog:     Buddy ({DEMO_DOG_ID})")
-    print(f"  ABC logs: {len(CAT_SCENARIOS)} cat + {len(DOG_SCENARIOS)} dog = {len(CAT_SCENARIOS) + len(DOG_SCENARIOS)} total")
+    print(
+        f"  ABC logs: {len(CAT_SCENARIOS)} cat + {len(DOG_SCENARIOS)} dog = {len(CAT_SCENARIOS) + len(DOG_SCENARIOS)} total"
+    )
     print(f"  Cat has {len(CAT_SCENARIOS)} logs (>= 10 threshold for pattern detection)")
 
 

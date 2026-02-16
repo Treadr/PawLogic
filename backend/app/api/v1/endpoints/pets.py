@@ -46,9 +46,7 @@ async def list_pets(
     db: AsyncSession = Depends(get_db),
 ) -> list[Pet]:
     result = await db.execute(
-        select(Pet)
-        .where(Pet.user_id == uuid.UUID(user_id))
-        .order_by(Pet.created_at.desc())
+        select(Pet).where(Pet.user_id == uuid.UUID(user_id)).order_by(Pet.created_at.desc())
     )
     return list(result.scalars().all())
 
@@ -89,9 +87,7 @@ async def delete_pet(
     await db.delete(pet)
 
 
-async def _get_user_pet(
-    db: AsyncSession, pet_id: uuid.UUID, user_id: str
-) -> Pet:
+async def _get_user_pet(db: AsyncSession, pet_id: uuid.UUID, user_id: str) -> Pet:
     """Fetch a pet owned by the given user, or raise 404."""
     result = await db.execute(
         select(Pet).where(Pet.id == pet_id, Pet.user_id == uuid.UUID(user_id))

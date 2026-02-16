@@ -35,14 +35,13 @@ async def health_detailed() -> dict[str, object]:
         checks["redis"] = f"unhealthy: {exc}"
 
     # Anthropic key configured check
-    checks["anthropic"] = (
-        "configured" if settings.ANTHROPIC_API_KEY else "not_configured"
-    )
+    checks["anthropic"] = "configured" if settings.ANTHROPIC_API_KEY else "not_configured"
 
-    overall = "healthy" if all(
-        v in ("healthy", "configured", "not_configured")
-        for v in checks.values()
-    ) else "degraded"
+    overall = (
+        "healthy"
+        if all(v in ("healthy", "configured", "not_configured") for v in checks.values())
+        else "degraded"
+    )
 
     return {
         "status": overall,

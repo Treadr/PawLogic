@@ -1,10 +1,10 @@
 """Progress and stats endpoints for behavior trend visualization."""
 
 import uuid
-from datetime import datetime, timedelta, timezone
+from datetime import UTC, datetime, timedelta
 
 from fastapi import APIRouter, Depends, Query
-from sqlalchemy import case, cast, Date, func, select
+from sqlalchemy import Date, cast, func, select
 from sqlalchemy.ext.asyncio import AsyncSession
 
 from app.core.exceptions import NotFoundException
@@ -16,9 +16,7 @@ from app.models.pet import Pet
 router = APIRouter()
 
 
-async def _verify_pet_ownership(
-    db: AsyncSession, pet_id: uuid.UUID, user_id: str
-) -> None:
+async def _verify_pet_ownership(db: AsyncSession, pet_id: uuid.UUID, user_id: str) -> None:
     result = await db.execute(
         select(Pet).where(Pet.id == pet_id, Pet.user_id == uuid.UUID(user_id))
     )
@@ -35,7 +33,7 @@ async def behavior_frequency(
 ) -> dict:
     """Daily behavior log counts for the past N days. Data for line/bar charts."""
     await _verify_pet_ownership(db, pet_id, user_id)
-    cutoff = datetime.now(timezone.utc).replace(tzinfo=None) - timedelta(days=days)
+    cutoff = datetime.now(UTC).replace(tzinfo=None) - timedelta(days=days)
     result = await db.execute(
         select(
             cast(ABCLog.occurred_at, Date).label("date"),
@@ -58,7 +56,7 @@ async def severity_trend(
 ) -> dict:
     """Daily average severity for the past N days. Data for line charts."""
     await _verify_pet_ownership(db, pet_id, user_id)
-    cutoff = datetime.now(timezone.utc).replace(tzinfo=None) - timedelta(days=days)
+    cutoff = datetime.now(UTC).replace(tzinfo=None) - timedelta(days=days)
     result = await db.execute(
         select(
             cast(ABCLog.occurred_at, Date).label("date"),
@@ -89,7 +87,7 @@ async def category_breakdown(
 ) -> dict:
     """Breakdown of behavior and antecedent categories. Data for pie/donut charts."""
     await _verify_pet_ownership(db, pet_id, user_id)
-    cutoff = datetime.now(timezone.utc).replace(tzinfo=None) - timedelta(days=days)
+    cutoff = datetime.now(UTC).replace(tzinfo=None) - timedelta(days=days)
 
     behaviors = await db.execute(
         select(
@@ -123,8 +121,12 @@ async def category_breakdown(
         "pet_id": str(pet_id),
         "days": days,
         "behaviors": [{"category": r.behavior_category, "count": r.count} for r in behaviors.all()],
-        "antecedents": [{"category": r.antecedent_category, "count": r.count} for r in antecedents.all()],
-        "consequences": [{"category": r.consequence_category, "count": r.count} for r in consequences.all()],
+        "antecedents": [
+            {"category": r.antecedent_category, "count": r.count} for r in antecedents.all()
+        ],
+        "consequences": [
+            {"category": r.consequence_category, "count": r.count} for r in consequences.all()
+        ],
     }
 
 
@@ -144,17 +146,19 @@ async def pet_dashboard(
     total_logs = total_result.scalar()
 
     # Last 7 days vs previous 7 days (trend direction)
-    now = datetime.now(timezone.utc).replace(tzinfo=None)
+    now = datetime.now(UTC).replace(tzinfo=None)
     week_ago = now - timedelta(days=7)
     two_weeks_ago = now - timedelta(days=14)
 
     recent = await db.execute(
-        select(func.count()).select_from(ABCLog).where(
-            ABCLog.pet_id == pet_id, ABCLog.occurred_at >= week_ago
-        )
+        select(func.count())
+        .select_from(ABCLog)
+        .where(ABCLog.pet_id == pet_id, ABCLog.occurred_at >= week_ago)
     )
     previous = await db.execute(
-        select(func.count()).select_from(ABCLog).where(
+        select(func.count())
+        .select_from(ABCLog)
+        .where(
             ABCLog.pet_id == pet_id,
             ABCLog.occurred_at >= two_weeks_ago,
             ABCLog.occurred_at < week_ago,

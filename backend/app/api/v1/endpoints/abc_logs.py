@@ -1,7 +1,7 @@
 """ABC Log CRUD endpoints -- the core ABA logging engine."""
 
 import uuid
-from datetime import datetime, timezone
+from datetime import UTC, datetime
 
 from fastapi import APIRouter, Depends, Query
 from sqlalchemy import func, select
@@ -22,9 +22,7 @@ from app.schemas.abc_log import ABCLogCreate, ABCLogResponse, ABCLogSummary, ABC
 router = APIRouter()
 
 
-async def _get_user_pet(
-    db: AsyncSession, pet_id: uuid.UUID, user_id: str
-) -> Pet:
+async def _get_user_pet(db: AsyncSession, pet_id: uuid.UUID, user_id: str) -> Pet:
     """Fetch a pet owned by the given user, or raise 404."""
     result = await db.execute(
         select(Pet).where(Pet.id == pet_id, Pet.user_id == uuid.UUID(user_id))
@@ -41,11 +39,10 @@ def _validate_taxonomy(species: str, body: ABCLogCreate | ABCLogUpdate) -> None:
     behavior_cats = get_behavior_categories(species)
     consequence_cats = CONSEQUENCE_CATEGORIES
 
-    if body.antecedent_category is not None:
-        if body.antecedent_category not in antecedent_cats:
-            raise ValidationException(
-                f"Invalid antecedent category '{body.antecedent_category}' for {species}"
-            )
+    if body.antecedent_category is not None and body.antecedent_category not in antecedent_cats:
+        raise ValidationException(
+            f"Invalid antecedent category '{body.antecedent_category}' for {species}"
+        )
     if body.antecedent_tags is not None and body.antecedent_category is not None:
         valid_tags = set(antecedent_cats.get(body.antecedent_category, []))
         invalid = [t for t in body.antecedent_tags if t not in valid_tags]
@@ -54,11 +51,10 @@ def _validate_taxonomy(species: str, body: ABCLogCreate | ABCLogUpdate) -> None:
                 f"Invalid antecedent tags for '{body.antecedent_category}': {invalid}"
             )
 
-    if body.behavior_category is not None:
-        if body.behavior_category not in behavior_cats:
-            raise ValidationException(
-                f"Invalid behavior category '{body.behavior_category}' for {species}"
-            )
+    if body.behavior_category is not None and body.behavior_category not in behavior_cats:
+        raise ValidationException(
+            f"Invalid behavior category '{body.behavior_category}' for {species}"
+        )
     if body.behavior_tags is not None and body.behavior_category is not None:
         valid_tags = set(behavior_cats.get(body.behavior_category, []))
         invalid = [t for t in body.behavior_tags if t not in valid_tags]
@@ -67,11 +63,8 @@ def _validate_taxonomy(species: str, body: ABCLogCreate | ABCLogUpdate) -> None:
                 f"Invalid behavior tags for '{body.behavior_category}': {invalid}"
             )
 
-    if body.consequence_category is not None:
-        if body.consequence_category not in consequence_cats:
-            raise ValidationException(
-                f"Invalid consequence category '{body.consequence_category}'"
-            )
+    if body.consequence_category is not None and body.consequence_category not in consequence_cats:
+        raise ValidationException(f"Invalid consequence category '{body.consequence_category}'")
     if body.consequence_tags is not None and body.consequence_category is not None:
         valid_tags = set(consequence_cats.get(body.consequence_category, []))
         invalid = [t for t in body.consequence_tags if t not in valid_tags]
@@ -90,12 +83,14 @@ async def create_abc_log(
     pet = await _get_user_pet(db, body.pet_id, user_id)
     _validate_taxonomy(pet.species, body)
 
-    now = datetime.now(timezone.utc)
-    if body.occurred_at and body.occurred_at.replace(tzinfo=timezone.utc) > now:
+    now = datetime.now(UTC)
+    if body.occurred_at and body.occurred_at.replace(tzinfo=UTC) > now:
         raise ValidationException("occurred_at cannot be in the future")
 
     # Strip timezone for TIMESTAMP WITHOUT TIME ZONE column
-    occurred = body.occurred_at.replace(tzinfo=None) if body.occurred_at else now.replace(tzinfo=None)
+    occurred = (
+        body.occurred_at.replace(tzinfo=None) if body.occurred_at else now.replace(tzinfo=None)
+    )
 
     log = ABCLog(
         pet_id=body.pet_id,
@@ -171,8 +166,7 @@ async def abc_log_summary(
         .limit(5)
     )
     top_behaviors = [
-        {"category": r.behavior_category, "count": r.count}
-        for r in top_behaviors_q.all()
+        {"category": r.behavior_category, "count": r.count} for r in top_behaviors_q.all()
     ]
 
     # Top antecedent categories
@@ -187,8 +181,7 @@ async def abc_log_summary(
         .limit(5)
     )
     top_antecedents = [
-        {"category": r.antecedent_category, "count": r.count}
-        for r in top_antecedents_q.all()
+        {"category": r.antecedent_category, "count": r.count} for r in top_antecedents_q.all()
     ]
 
     return {
@@ -208,9 +201,7 @@ async def get_abc_log(
     db: AsyncSession = Depends(get_db),
 ) -> ABCLog:
     result = await db.execute(
-        select(ABCLog).where(
-            ABCLog.id == log_id, ABCLog.user_id == uuid.UUID(user_id)
-        )
+        select(ABCLog).where(ABCLog.id == log_id, ABCLog.user_id == uuid.UUID(user_id))
     )
     log = result.scalar_one_or_none()
     if log is None:
@@ -226,9 +217,7 @@ async def update_abc_log(
     db: AsyncSession = Depends(get_db),
 ) -> ABCLog:
     result = await db.execute(
-        select(ABCLog).where(
-            ABCLog.id == log_id, ABCLog.user_id == uuid.UUID(user_id)
-        )
+        select(ABCLog).where(ABCLog.id == log_id, ABCLog.user_id == uuid.UUID(user_id))
     )
     log = result.scalar_one_or_none()
     if log is None:
@@ -254,9 +243,7 @@ async def delete_abc_log(
     db: AsyncSession = Depends(get_db),
 ) -> None:
     result = await db.execute(
-        select(ABCLog).where(
-            ABCLog.id == log_id, ABCLog.user_id == uuid.UUID(user_id)
-        )
+        select(ABCLog).where(ABCLog.id == log_id, ABCLog.user_id == uuid.UUID(user_id))
     )
     log = result.scalar_one_or_none()
     if log is None:

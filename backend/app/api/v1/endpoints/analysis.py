@@ -35,9 +35,7 @@ async def ask_coaching(
     to provide personalized, ABA-grounded advice. Falls back to general
     tips if the Claude API key is not configured.
     """
-    return await coaching_response(
-        db, body.pet_id, uuid.UUID(user_id), body.question
-    )
+    return await coaching_response(db, body.pet_id, uuid.UUID(user_id), body.question)
 
 
 @router.post("/detect-patterns")
@@ -53,6 +51,7 @@ async def run_pattern_detection(
     )
     if result.scalar_one_or_none() is None:
         from app.core.exceptions import NotFoundException
+
         raise NotFoundException(f"Pet {pet_id}")
 
     # Check log count

@@ -18,6 +18,7 @@ router = APIRouter()
 # Request / Response schemas
 # ---------------------------------------------------------------------------
 
+
 class DevTokenRequest(BaseModel):
     """Body for the dev-token endpoint."""
 
@@ -48,6 +49,7 @@ class VerifyResponse(BaseModel):
 # Endpoints
 # ---------------------------------------------------------------------------
 
+
 @router.post("/verify", response_model=VerifyResponse)
 async def verify_token(user_id: str = Depends(get_current_user)) -> VerifyResponse:
     """Verify the caller's JWT and return basic user info.
@@ -72,9 +74,7 @@ async def generate_dev_token(body: DevTokenRequest) -> DevTokenResponse:
     Supabase.
     """
     if settings.ENVIRONMENT != "development":
-        raise ForbiddenException(
-            "This endpoint is only available in the development environment"
-        )
+        raise ForbiddenException("This endpoint is only available in the development environment")
 
     token = create_dev_token(body.user_id)
     return DevTokenResponse(token=token, user_id=body.user_id)

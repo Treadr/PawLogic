@@ -3,7 +3,7 @@
 import uuid
 
 from fastapi import APIRouter, Depends, Query
-from sqlalchemy import select, func
+from sqlalchemy import func, select
 from sqlalchemy.ext.asyncio import AsyncSession
 
 from app.core.exceptions import NotFoundException
@@ -16,9 +16,7 @@ from app.schemas.insight import InsightMarkRead, InsightResponse
 router = APIRouter()
 
 
-async def _verify_pet_ownership(
-    db: AsyncSession, pet_id: uuid.UUID, user_id: str
-) -> None:
+async def _verify_pet_ownership(db: AsyncSession, pet_id: uuid.UUID, user_id: str) -> None:
     result = await db.execute(
         select(Pet).where(Pet.id == pet_id, Pet.user_id == uuid.UUID(user_id))
     )
@@ -36,7 +34,7 @@ async def list_insights(
     await _verify_pet_ownership(db, pet_id, user_id)
     query = select(Insight).where(Insight.pet_id == pet_id)
     if unread_only:
-        query = query.where(Insight.is_read == False)
+        query = query.where(Insight.is_read.is_(False))
     query = query.order_by(Insight.created_at.desc())
     result = await db.execute(query)
     return list(result.scalars().all())
@@ -53,9 +51,9 @@ async def insights_summary(
         select(func.count()).select_from(Insight).where(Insight.pet_id == pet_id)
     )
     unread = await db.execute(
-        select(func.count()).select_from(Insight).where(
-            Insight.pet_id == pet_id, Insight.is_read == False
-        )
+        select(func.count())
+        .select_from(Insight)
+        .where(Insight.pet_id == pet_id, Insight.is_read.is_(False))
     )
     return {"total": total.scalar(), "unread": unread.scalar()}
 
@@ -67,9 +65,7 @@ async def get_insight(
     db: AsyncSession = Depends(get_db),
 ) -> Insight:
     result = await db.execute(
-        select(Insight).where(
-            Insight.id == insight_id, Insight.user_id == uuid.UUID(user_id)
-        )
+        select(Insight).where(Insight.id == insight_id, Insight.user_id == uuid.UUID(user_id))
     )
     insight = result.scalar_one_or_none()
     if insight is None:
@@ -85,9 +81,7 @@ async def mark_insight_read(
     db: AsyncSession = Depends(get_db),
 ) -> Insight:
     result = await db.execute(
-        select(Insight).where(
-            Insight.id == insight_id, Insight.user_id == uuid.UUID(user_id)
-        )
+        select(Insight).where(Insight.id == insight_id, Insight.user_id == uuid.UUID(user_id))
     )
     insight = result.scalar_one_or_none()
     if insight is None:

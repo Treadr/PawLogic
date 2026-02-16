@@ -21,9 +21,7 @@ def analyze_patterns(pet_id: str, user_id: str) -> dict:
 
     async def _run():
         async with async_session_factory() as session:
-            return await detect_patterns(
-                session, uuid.UUID(pet_id), uuid.UUID(user_id)
-            )
+            return await detect_patterns(session, uuid.UUID(pet_id), uuid.UUID(user_id))
 
     loop = asyncio.new_event_loop()
     try:

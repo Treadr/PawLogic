@@ -74,20 +74,16 @@ async def coaching_response(
     Falls back to a helpful message if Claude API is not configured.
     """
     # Fetch pet info
-    pet_result = await db.execute(
-        select(Pet).where(Pet.id == pet_id, Pet.user_id == user_id)
-    )
+    pet_result = await db.execute(select(Pet).where(Pet.id == pet_id, Pet.user_id == user_id))
     pet = pet_result.scalar_one_or_none()
     if pet is None:
         from app.core.exceptions import NotFoundException
+
         raise NotFoundException(f"Pet {pet_id}")
 
     # Fetch recent logs
     logs_result = await db.execute(
-        select(ABCLog)
-        .where(ABCLog.pet_id == pet_id)
-        .order_by(ABCLog.occurred_at.desc())
-        .limit(20)
+        select(ABCLog).where(ABCLog.pet_id == pet_id).order_by(ABCLog.occurred_at.desc()).limit(20)
     )
     logs = list(logs_result.scalars().all())
 
@@ -109,8 +105,7 @@ async def coaching_response(
     insight_context = _format_insights(insights)
 
     user_message = (
-        f"{pet_context}\n\n{log_context}\n\n{insight_context}\n\n"
-        f"Owner's question: {question}"
+        f"{pet_context}\n\n{log_context}\n\n{insight_context}\n\nOwner's question: {question}"
     )
 
     # Check if Claude API is configured

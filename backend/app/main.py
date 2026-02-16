@@ -36,7 +36,10 @@ app = FastAPI(
         {"name": "health", "description": "Service health checks"},
         {"name": "auth", "description": "Authentication and token management"},
         {"name": "pets", "description": "Pet profile CRUD operations"},
-        {"name": "abc-logs", "description": "ABC (Antecedent-Behavior-Consequence) behavior logging"},
+        {
+            "name": "abc-logs",
+            "description": "ABC (Antecedent-Behavior-Consequence) behavior logging",
+        },
         {"name": "analysis", "description": "AI-powered behavior pattern detection"},
         {"name": "insights", "description": "AI-generated behavioral insights and recommendations"},
         {"name": "progress", "description": "Progress tracking, charts, and dashboard data"},

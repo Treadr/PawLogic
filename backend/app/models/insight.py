@@ -19,15 +19,11 @@ class Insight(Base):
             "behavior_function IS NULL OR behavior_function IN ('attention', 'escape', 'tangible', 'sensory')",
             name="ck_insights_function",
         ),
-        CheckConstraint(
-            "confidence BETWEEN 0 AND 1", name="ck_insights_confidence"
-        ),
+        CheckConstraint("confidence BETWEEN 0 AND 1", name="ck_insights_confidence"),
         Index("idx_insights_pet_unread", "pet_id", "is_read"),
     )
 
-    id: Mapped[uuid.UUID] = mapped_column(
-        UUID(as_uuid=True), primary_key=True, default=uuid.uuid4
-    )
+    id: Mapped[uuid.UUID] = mapped_column(UUID(as_uuid=True), primary_key=True, default=uuid.uuid4)
     pet_id: Mapped[uuid.UUID] = mapped_column(
         UUID(as_uuid=True),
         ForeignKey("pets.id", ondelete="CASCADE"),
@@ -43,14 +39,10 @@ class Insight(Base):
     title: Mapped[str] = mapped_column(String(200), nullable=False)
     body: Mapped[str] = mapped_column(nullable=False)
     confidence: Mapped[float | None] = mapped_column(Numeric(3, 2))
-    abc_log_ids: Mapped[list[uuid.UUID] | None] = mapped_column(
-        ARRAY(UUID(as_uuid=True))
-    )
+    abc_log_ids: Mapped[list[uuid.UUID] | None] = mapped_column(ARRAY(UUID(as_uuid=True)))
     behavior_function: Mapped[str | None] = mapped_column(String(20))
     is_read: Mapped[bool] = mapped_column(server_default=text("false"))
-    created_at: Mapped[datetime] = mapped_column(
-        nullable=False, server_default=text("NOW()")
-    )
+    created_at: Mapped[datetime] = mapped_column(nullable=False, server_default=text("NOW()"))
 
     # Relationships
     pet: Mapped["Pet"] = relationship(back_populates="insights")  # noqa: F821

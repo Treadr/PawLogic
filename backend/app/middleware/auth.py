@@ -37,10 +37,10 @@ def verify_jwt(token: str) -> dict:
             algorithms=[ALGORITHM],
             options={"require_sub": True},
         )
-    except ExpiredSignatureError:
-        raise UnauthorizedException("Token has expired")
-    except JWTError:
-        raise UnauthorizedException("Invalid or malformed token")
+    except ExpiredSignatureError as exc:
+        raise UnauthorizedException("Token has expired") from exc
+    except JWTError as exc:
+        raise UnauthorizedException("Invalid or malformed token") from exc
 
     if not payload.get("sub"):
         raise UnauthorizedException("Token is missing required 'sub' claim")

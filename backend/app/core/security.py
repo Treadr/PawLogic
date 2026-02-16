@@ -7,7 +7,7 @@ Provides:
 """
 
 import uuid
-from datetime import datetime, timedelta, timezone
+from datetime import UTC, datetime, timedelta
 
 from fastapi import Depends
 from fastapi.security import HTTPAuthorizationCredentials, HTTPBearer
@@ -88,15 +88,13 @@ def create_dev_token(user_id: str) -> str:
         UnauthorizedException: If the JWT secret is not configured.
     """
     if settings.ENVIRONMENT != "development":
-        raise ForbiddenException(
-            "Dev tokens can only be created in the development environment"
-        )
+        raise ForbiddenException("Dev tokens can only be created in the development environment")
 
     secret = settings.SUPABASE_JWT_SECRET
     if not secret:
         raise UnauthorizedException("JWT secret is not configured")
 
-    now = datetime.now(timezone.utc)
+    now = datetime.now(UTC)
     payload = {
         "sub": user_id,
         "iat": now,

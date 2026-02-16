@@ -6,10 +6,9 @@ Requires minimum 10 logs before activation. Generates Insight records.
 
 import uuid
 from collections import Counter
-from datetime import datetime
 from decimal import Decimal
 
-from sqlalchemy import func, select
+from sqlalchemy import select
 from sqlalchemy.ext.asyncio import AsyncSession
 
 from app.core.taxonomy import BEHAVIOR_FUNCTIONS, SEVERITY_LABELS
@@ -36,9 +35,7 @@ async def detect_patterns(
     """
     # Fetch all logs for this pet
     result = await db.execute(
-        select(ABCLog)
-        .where(ABCLog.pet_id == pet_id)
-        .order_by(ABCLog.occurred_at.asc())
+        select(ABCLog).where(ABCLog.pet_id == pet_id).order_by(ABCLog.occurred_at.asc())
     )
     logs = list(result.scalars().all())
 
@@ -112,18 +109,20 @@ def _detect_ab_pairs(logs: list[ABCLog]) -> list[dict]:
         if count < MIN_PAIR_FREQUENCY:
             continue
         confidence = count / total
-        results.append({
-            "insight_type": "pattern",
-            "title": f"Pattern: {_humanize(ant)} triggers {_humanize(beh)}",
-            "body": (
-                f"We've noticed that when there's a {_humanize(ant)} event, "
-                f"your pet tends to show {_humanize(beh)} behavior. "
-                f"This happened {count} out of {total} logged incidents "
-                f"({round(confidence * 100)}% of the time)."
-            ),
-            "confidence": confidence,
-            "abc_log_ids": pair_logs[ant, beh][:10],
-        })
+        results.append(
+            {
+                "insight_type": "pattern",
+                "title": f"Pattern: {_humanize(ant)} triggers {_humanize(beh)}",
+                "body": (
+                    f"We've noticed that when there's a {_humanize(ant)} event, "
+                    f"your pet tends to show {_humanize(beh)} behavior. "
+                    f"This happened {count} out of {total} logged incidents "
+                    f"({round(confidence * 100)}% of the time)."
+                ),
+                "confidence": confidence,
+                "abc_log_ids": pair_logs[ant, beh][:10],
+            }
+        )
 
     return results
 
@@ -144,18 +143,20 @@ def _detect_bc_pairs(logs: list[ABCLog]) -> list[dict]:
         if count < MIN_PAIR_FREQUENCY:
             continue
         confidence = count / total
-        results.append({
-            "insight_type": "correlation",
-            "title": f"Response pattern: {_humanize(beh)} leads to {_humanize(con)}",
-            "body": (
-                f"After {_humanize(beh)} behavior, the most common response "
-                f"has been {_humanize(con)}. This happened {count} times. "
-                f"Understanding this pattern helps us see what might be "
-                f"reinforcing the behavior."
-            ),
-            "confidence": confidence,
-            "abc_log_ids": pair_logs[beh, con][:10],
-        })
+        results.append(
+            {
+                "insight_type": "correlation",
+                "title": f"Response pattern: {_humanize(beh)} leads to {_humanize(con)}",
+                "body": (
+                    f"After {_humanize(beh)} behavior, the most common response "
+                    f"has been {_humanize(con)}. This happened {count} times. "
+                    f"Understanding this pattern helps us see what might be "
+                    f"reinforcing the behavior."
+                ),
+                "confidence": confidence,
+                "abc_log_ids": pair_logs[beh, con][:10],
+            }
+        )
 
     return results
 
@@ -199,24 +200,28 @@ def _assess_behavior_functions(logs: list[ABCLog]) -> list[dict]:
             continue
 
         level = (
-            "likely" if confidence >= CONFIDENCE_THRESHOLDS["high"]
-            else "possibly" if confidence >= CONFIDENCE_THRESHOLDS["medium"]
+            "likely"
+            if confidence >= CONFIDENCE_THRESHOLDS["high"]
+            else "possibly"
+            if confidence >= CONFIDENCE_THRESHOLDS["medium"]
             else "might be"
         )
 
-        results.append({
-            "insight_type": "function",
-            "title": f"Behavior function: {_humanize(beh)} is {level} {top_fn}-driven",
-            "body": (
-                f"Based on {total} logged incidents, your pet's {_humanize(beh)} "
-                f"behavior {level} serves an {top_fn} function. "
-                f"This means the behavior is {_function_explanation(top_fn)}. "
-                f"This helps us recommend the right approach to address it."
-            ),
-            "confidence": confidence,
-            "behavior_function": top_fn,
-            "abc_log_ids": behavior_logs[beh][:10],
-        })
+        results.append(
+            {
+                "insight_type": "function",
+                "title": f"Behavior function: {_humanize(beh)} is {level} {top_fn}-driven",
+                "body": (
+                    f"Based on {total} logged incidents, your pet's {_humanize(beh)} "
+                    f"behavior {level} serves an {top_fn} function. "
+                    f"This means the behavior is {_function_explanation(top_fn)}. "
+                    f"This helps us recommend the right approach to address it."
+                ),
+                "confidence": confidence,
+                "behavior_function": top_fn,
+                "abc_log_ids": behavior_logs[beh][:10],
+            }
+        )
 
     return results
 
@@ -231,8 +236,8 @@ def _detect_severity_trends(logs: list[ABCLog]) -> list[dict]:
     first_half = logs[:mid]
     second_half = logs[mid:]
 
-    first_avg = sum(l.behavior_severity for l in first_half) / len(first_half)
-    second_avg = sum(l.behavior_severity for l in second_half) / len(second_half)
+    first_avg = sum(log.behavior_severity for log in first_half) / len(first_half)
+    second_avg = sum(log.behavior_severity for log in second_half) / len(second_half)
 
     diff = second_avg - first_avg
     if abs(diff) < 0.5:
@@ -241,19 +246,21 @@ def _detect_severity_trends(logs: list[ABCLog]) -> list[dict]:
     direction = "increasing" if diff > 0 else "decreasing"
     confidence = min(abs(diff) / 2, 1.0)
 
-    return [{
-        "insight_type": "pattern",
-        "title": f"Severity trend: behaviors are {direction}",
-        "body": (
-            f"Looking at your logs over time, behavior severity has been {direction}. "
-            f"Average severity went from {round(first_avg, 1)} "
-            f"({SEVERITY_LABELS.get(round(first_avg), 'N/A')}) "
-            f"to {round(second_avg, 1)} "
-            f"({SEVERITY_LABELS.get(round(second_avg), 'N/A')}). "
-            f"{'This is encouraging progress!' if diff < 0 else 'This may need attention.'}"
-        ),
-        "confidence": confidence,
-    }]
+    return [
+        {
+            "insight_type": "pattern",
+            "title": f"Severity trend: behaviors are {direction}",
+            "body": (
+                f"Looking at your logs over time, behavior severity has been {direction}. "
+                f"Average severity went from {round(first_avg, 1)} "
+                f"({SEVERITY_LABELS.get(round(first_avg), 'N/A')}) "
+                f"to {round(second_avg, 1)} "
+                f"({SEVERITY_LABELS.get(round(second_avg), 'N/A')}). "
+                f"{'This is encouraging progress!' if diff < 0 else 'This may need attention.'}"
+            ),
+            "confidence": confidence,
+        }
+    ]
 
 
 def _humanize(snake_str: str) -> str:
