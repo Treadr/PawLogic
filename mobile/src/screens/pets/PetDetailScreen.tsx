@@ -49,6 +49,12 @@ export default function PetDetailScreen({ route, navigation }: Props) {
   }, [loadData]);
 
   useEffect(() => {
+    if (pet) {
+      navigation.setOptions({ title: pet.name });
+    }
+  }, [pet, navigation]);
+
+  useEffect(() => {
     const unsubscribe = navigation.addListener('focus', loadData);
     return unsubscribe;
   }, [navigation, loadData]);

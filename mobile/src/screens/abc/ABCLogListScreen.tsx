@@ -1,4 +1,4 @@
-import React, { useCallback, useMemo, useState } from 'react';
+import React, { useCallback, useEffect, useMemo, useState } from 'react';
 import {
   View,
   Text,
@@ -14,6 +14,7 @@ import { colors } from '../../constants/colors';
 import { fontSize, spacing, borderRadius } from '../../constants/typography';
 import * as abcLogService from '../../services/abcLogs';
 import type { ABCLog } from '../../types/abc-log';
+import type { ABCLogSummary } from '../../services/abcLogs';
 import type { RootStackParamList } from '../../navigation/AppNavigator';
 
 type Props = NativeStackScreenProps<RootStackParamList, 'ABCLogList'>;
@@ -24,17 +25,26 @@ const SEVERITY_LABELS = ['', '1', '2', '3', '4', '5'];
 export default function ABCLogListScreen({ route, navigation }: Props) {
   const { petId, petName } = route.params;
   const [logs, setLogs] = useState<ABCLog[]>([]);
+  const [summary, setSummary] = useState<ABCLogSummary | null>(null);
   const [refreshing, setRefreshing] = useState(false);
   const [severityFilter, setSeverityFilter] = useState<number | null>(null);
 
   const loadLogs = useCallback(async () => {
     try {
-      const data = await abcLogService.listABCLogs(petId);
+      const [data, summaryData] = await Promise.all([
+        abcLogService.listABCLogs(petId),
+        abcLogService.getABCLogSummary(petId),
+      ]);
       setLogs(data);
+      setSummary(summaryData);
     } catch (err) {
       console.error('Failed to load logs:', err);
     }
   }, [petId]);
+
+  useEffect(() => {
+    navigation.setOptions({ title: `${petName}'s History` });
+  }, [petName, navigation]);
 
   useFocusEffect(
     useCallback(() => {
@@ -171,6 +181,32 @@ export default function ABCLogListScreen({ route, navigation }: Props) {
         refreshControl={
           <RefreshControl refreshing={refreshing} onRefresh={onRefresh} />
         }
+        ListHeaderComponent={
+          summary && summary.total_logs > 0 ? (
+            <View style={styles.summaryCard}>
+              <View style={styles.summaryRow}>
+                <View style={styles.summaryStat}>
+                  <Text style={styles.summaryValue}>{summary.total_logs}</Text>
+                  <Text style={styles.summaryLabel}>Total</Text>
+                </View>
+                <View style={styles.summaryStat}>
+                  <Text style={styles.summaryValue}>
+                    {summary.severity_avg?.toFixed(1) || '--'}
+                  </Text>
+                  <Text style={styles.summaryLabel}>Avg Severity</Text>
+                </View>
+                {summary.top_behaviors.length > 0 && (
+                  <View style={styles.summaryStat}>
+                    <Text style={styles.summaryValue} numberOfLines={1}>
+                      {summary.top_behaviors[0].category.replace(/_/g, ' ')}
+                    </Text>
+                    <Text style={styles.summaryLabel}>Top Behavior</Text>
+                  </View>
+                )}
+              </View>
+            </View>
+          ) : null
+        }
         ListEmptyComponent={
           <View style={styles.empty}>
             <Text style={styles.emptyText}>
@@ -216,6 +252,33 @@ const styles = StyleSheet.create({
   },
   filterChipTextActive: {
     color: '#fff',
+  },
+  summaryCard: {
+    marginHorizontal: spacing.lg,
+    marginTop: spacing.md,
+    padding: spacing.lg,
+    backgroundColor: colors.surfaceAlt,
+    borderRadius: borderRadius.lg,
+    borderWidth: 1,
+    borderColor: colors.primary[100],
+  },
+  summaryRow: {
+    flexDirection: 'row',
+    justifyContent: 'space-around',
+  },
+  summaryStat: {
+    alignItems: 'center',
+    flex: 1,
+  },
+  summaryValue: {
+    fontSize: fontSize.lg,
+    fontWeight: '700',
+    color: colors.primary[600],
+  },
+  summaryLabel: {
+    fontSize: fontSize.xs,
+    color: colors.neutral[500],
+    marginTop: 2,
   },
   card: {
     backgroundColor: colors.surface,
