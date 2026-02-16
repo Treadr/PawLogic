@@ -1,4 +1,4 @@
-import React, { useCallback, useState } from 'react';
+import React, { useCallback, useMemo, useState } from 'react';
 import {
   View,
   Text,
@@ -19,11 +19,13 @@ import type { RootStackParamList } from '../../navigation/AppNavigator';
 type Props = NativeStackScreenProps<RootStackParamList, 'ABCLogList'>;
 
 const SEVERITY_COLORS = ['', '#22C55E', '#84CC16', '#F59E0B', '#F97316', '#EF4444'];
+const SEVERITY_LABELS = ['', '1', '2', '3', '4', '5'];
 
 export default function ABCLogListScreen({ route, navigation }: Props) {
   const { petId, petName } = route.params;
   const [logs, setLogs] = useState<ABCLog[]>([]);
   const [refreshing, setRefreshing] = useState(false);
+  const [severityFilter, setSeverityFilter] = useState<number | null>(null);
 
   const loadLogs = useCallback(async () => {
     try {
@@ -39,6 +41,11 @@ export default function ABCLogListScreen({ route, navigation }: Props) {
       loadLogs();
     }, [loadLogs]),
   );
+
+  const filteredLogs = useMemo(() => {
+    if (severityFilter === null) return logs;
+    return logs.filter((l) => l.behavior_severity === severityFilter);
+  }, [logs, severityFilter]);
 
   const onRefresh = async () => {
     setRefreshing(true);
@@ -110,8 +117,55 @@ export default function ABCLogListScreen({ route, navigation }: Props) {
 
   return (
     <View style={styles.container}>
+      {/* Severity Filter */}
+      {logs.length > 0 && (
+        <View style={styles.filterBar}>
+          <TouchableOpacity
+            style={[styles.filterChip, severityFilter === null && styles.filterChipActive]}
+            onPress={() => setSeverityFilter(null)}
+          >
+            <Text
+              style={[
+                styles.filterChipText,
+                severityFilter === null && styles.filterChipTextActive,
+              ]}
+            >
+              All ({logs.length})
+            </Text>
+          </TouchableOpacity>
+          {[1, 2, 3, 4, 5].map((sev) => {
+            const count = logs.filter((l) => l.behavior_severity === sev).length;
+            if (count === 0) return null;
+            return (
+              <TouchableOpacity
+                key={sev}
+                style={[
+                  styles.filterChip,
+                  severityFilter === sev && {
+                    backgroundColor: SEVERITY_COLORS[sev],
+                    borderColor: SEVERITY_COLORS[sev],
+                  },
+                ]}
+                onPress={() =>
+                  setSeverityFilter(severityFilter === sev ? null : sev)
+                }
+              >
+                <Text
+                  style={[
+                    styles.filterChipText,
+                    severityFilter === sev && styles.filterChipTextActive,
+                  ]}
+                >
+                  {SEVERITY_LABELS[sev]} ({count})
+                </Text>
+              </TouchableOpacity>
+            );
+          })}
+        </View>
+      )}
+
       <FlatList
-        data={logs}
+        data={filteredLogs}
         keyExtractor={(l) => l.id}
         renderItem={renderLog}
         refreshControl={
@@ -120,11 +174,15 @@ export default function ABCLogListScreen({ route, navigation }: Props) {
         ListEmptyComponent={
           <View style={styles.empty}>
             <Text style={styles.emptyText}>
-              No behavior logs yet for {petName}.
+              {severityFilter !== null
+                ? `No logs with severity ${severityFilter}.`
+                : `No behavior logs yet for ${petName}.`}
             </Text>
           </View>
         }
-        contentContainerStyle={logs.length === 0 ? styles.emptyContainer : undefined}
+        contentContainerStyle={
+          filteredLogs.length === 0 ? styles.emptyContainer : undefined
+        }
       />
     </View>
   );
@@ -132,6 +190,33 @@ export default function ABCLogListScreen({ route, navigation }: Props) {
 
 const styles = StyleSheet.create({
   container: { flex: 1, backgroundColor: colors.background },
+  filterBar: {
+    flexDirection: 'row',
+    paddingHorizontal: spacing.lg,
+    paddingVertical: spacing.sm,
+    gap: spacing.xs,
+    flexWrap: 'wrap',
+  },
+  filterChip: {
+    paddingVertical: spacing.xs,
+    paddingHorizontal: spacing.md,
+    borderRadius: borderRadius.full,
+    borderWidth: 1,
+    borderColor: colors.neutral[300],
+    backgroundColor: colors.surface,
+  },
+  filterChipActive: {
+    backgroundColor: colors.primary[500],
+    borderColor: colors.primary[500],
+  },
+  filterChipText: {
+    fontSize: fontSize.xs,
+    fontWeight: '600',
+    color: colors.neutral[600],
+  },
+  filterChipTextActive: {
+    color: '#fff',
+  },
   card: {
     backgroundColor: colors.surface,
     marginHorizontal: spacing.lg,
