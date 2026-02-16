@@ -54,6 +54,13 @@ services:
       redis:
         condition: service_started
 
+  frontend:
+    build: ./frontend
+    ports:
+      - "3000:3000"
+    depends_on:
+      - api
+
 volumes:
   pg-data:
   redis-data:
