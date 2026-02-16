@@ -18,9 +18,30 @@ async def lifespan(app: FastAPI) -> AsyncGenerator[None]:
 
 app = FastAPI(
     title="PawLogic API",
-    description="AI-augmented pet behavior analysis grounded in ABA methodology.",
+    description=(
+        "AI-augmented pet behavior analysis grounded in Applied Behavior Analysis (ABA) methodology.\n\n"
+        "## Core Concepts\n\n"
+        "- **ABC Logging:** Record Antecedent-Behavior-Consequence incidents for your pets\n"
+        "- **Pattern Detection:** AI identifies behavioral patterns after 10+ logged incidents\n"
+        "- **Insights:** Actionable findings about your pet's behavior functions\n"
+        "- **Progress Tracking:** Visualize behavior frequency, severity trends, and more\n\n"
+        "## Authentication\n\n"
+        "All endpoints (except health and taxonomy) require a Bearer token in the Authorization header.\n"
+        "In development mode, use `POST /api/v1/auth/dev-token` to generate a token."
+    ),
     version=settings.APP_VERSION,
     lifespan=lifespan,
+    openapi_tags=[
+        {"name": "health", "description": "Service health checks"},
+        {"name": "auth", "description": "Authentication and token management"},
+        {"name": "pets", "description": "Pet profile CRUD operations"},
+        {"name": "abc-logs", "description": "ABC (Antecedent-Behavior-Consequence) behavior logging"},
+        {"name": "analysis", "description": "AI-powered behavior pattern detection"},
+        {"name": "insights", "description": "AI-generated behavioral insights and recommendations"},
+        {"name": "progress", "description": "Progress tracking, charts, and dashboard data"},
+    ],
+    docs_url="/docs",
+    redoc_url="/redoc",
 )
 
 # CORS
