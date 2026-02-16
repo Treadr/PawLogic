@@ -92,3 +92,5 @@ celerybeat.pid
 
 # Ruff
 .ruff_cache/
+.claude/
+nul

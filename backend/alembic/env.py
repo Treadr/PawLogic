@@ -3,6 +3,11 @@ import os
 import sys
 from logging.config import fileConfig
 
+from dotenv import load_dotenv
+
+# Load .env file before anything else
+load_dotenv(os.path.join(os.path.dirname(__file__), "..", ".env"))
+
 from alembic import context
 from sqlalchemy import pool
 from sqlalchemy.ext.asyncio import create_async_engine
@@ -11,6 +16,7 @@ from sqlalchemy.ext.asyncio import create_async_engine
 sys.path.insert(0, os.path.join(os.path.dirname(__file__), ".."))
 
 from app.db.base import Base  # noqa: E402
+from app.models import ABCLog, Insight, Pet, User  # noqa: E402, F401
 
 config = context.config
 
