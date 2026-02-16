@@ -24,8 +24,10 @@ export default function PetDetailScreen({ route, navigation }: Props) {
   const [pet, setPet] = useState<Pet | null>(null);
   const [dashboard, setDashboard] = useState<DashboardData | null>(null);
   const [loading, setLoading] = useState(true);
+  const [error, setError] = useState<string | null>(null);
 
   const loadData = useCallback(async () => {
+    setError(null);
     try {
       const [petData, dashData] = await Promise.all([
         petService.getPet(petId),
@@ -34,6 +36,8 @@ export default function PetDetailScreen({ route, navigation }: Props) {
       setPet(petData);
       setDashboard(dashData);
     } catch (err) {
+      const msg = err instanceof Error ? err.message : String(err);
+      setError(msg);
       console.error('Failed to load pet details:', err);
     } finally {
       setLoading(false);
@@ -49,10 +53,28 @@ export default function PetDetailScreen({ route, navigation }: Props) {
     return unsubscribe;
   }, [navigation, loadData]);
 
-  if (loading || !pet) {
+  if (loading) {
     return (
       <View style={styles.center}>
         <ActivityIndicator size="large" color={colors.primary[500]} />
+      </View>
+    );
+  }
+
+  if (error || !pet) {
+    return (
+      <View style={styles.center}>
+        <Text style={styles.errorTitle}>Failed to load pet</Text>
+        <Text style={styles.errorMessage}>{error || 'Pet not found'}</Text>
+        <TouchableOpacity
+          style={styles.retryButton}
+          onPress={() => {
+            setLoading(true);
+            loadData();
+          }}
+        >
+          <Text style={styles.retryButtonText}>Retry</Text>
+        </TouchableOpacity>
       </View>
     );
   }
@@ -241,7 +263,30 @@ export default function PetDetailScreen({ route, navigation }: Props) {
 const styles = StyleSheet.create({
   container: { flex: 1, backgroundColor: colors.background },
   content: { padding: spacing.lg },
-  center: { flex: 1, justifyContent: 'center', alignItems: 'center' },
+  center: { flex: 1, justifyContent: 'center', alignItems: 'center', padding: spacing['2xl'] },
+  errorTitle: {
+    fontSize: fontSize.lg,
+    fontWeight: '600',
+    color: colors.neutral[700],
+    marginBottom: spacing.sm,
+  },
+  errorMessage: {
+    fontSize: fontSize.sm,
+    color: colors.neutral[500],
+    textAlign: 'center',
+    marginBottom: spacing.xl,
+  },
+  retryButton: {
+    backgroundColor: colors.primary[500],
+    paddingVertical: spacing.md,
+    paddingHorizontal: spacing['3xl'],
+    borderRadius: borderRadius.md,
+  },
+  retryButtonText: {
+    color: '#fff',
+    fontSize: fontSize.base,
+    fontWeight: '600',
+  },
   card: {
     backgroundColor: colors.surface,
     borderRadius: borderRadius.lg,

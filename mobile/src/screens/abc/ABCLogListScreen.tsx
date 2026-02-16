@@ -5,6 +5,7 @@ import {
   FlatList,
   StyleSheet,
   RefreshControl,
+  TouchableOpacity,
 } from 'react-native';
 import { useFocusEffect } from '@react-navigation/native';
 import type { NativeStackScreenProps } from '@react-navigation/native-stack';
@@ -19,7 +20,7 @@ type Props = NativeStackScreenProps<RootStackParamList, 'ABCLogList'>;
 
 const SEVERITY_COLORS = ['', '#22C55E', '#84CC16', '#F59E0B', '#F97316', '#EF4444'];
 
-export default function ABCLogListScreen({ route }: Props) {
+export default function ABCLogListScreen({ route, navigation }: Props) {
   const { petId, petName } = route.params;
   const [logs, setLogs] = useState<ABCLog[]>([]);
   const [refreshing, setRefreshing] = useState(false);
@@ -58,7 +59,11 @@ export default function ABCLogListScreen({ route }: Props) {
   };
 
   const renderLog = ({ item }: { item: ABCLog }) => (
-    <View style={styles.card}>
+    <TouchableOpacity
+      style={styles.card}
+      onPress={() => navigation.navigate('ABCLogDetail', { logId: item.id })}
+      activeOpacity={0.7}
+    >
       <View style={styles.cardHeader}>
         <Text style={styles.date}>{formatDate(item.occurred_at)}</Text>
         <View
@@ -100,7 +105,7 @@ export default function ABCLogListScreen({ route }: Props) {
           </Text>
         </View>
       </View>
-    </View>
+    </TouchableOpacity>
   );
 
   return (

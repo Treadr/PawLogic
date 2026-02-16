@@ -10,6 +10,7 @@ import PetListScreen from '../screens/pets/PetListScreen';
 import AddPetScreen from '../screens/pets/AddPetScreen';
 import ABCLogScreen from '../screens/abc/ABCLogScreen';
 import ABCLogListScreen from '../screens/abc/ABCLogListScreen';
+import ABCLogDetailScreen from '../screens/abc/ABCLogDetailScreen';
 import InsightsScreen from '../screens/insights/InsightsScreen';
 import PetDetailScreen from '../screens/pets/PetDetailScreen';
 import ProgressScreen from '../screens/progress/ProgressScreen';
@@ -27,6 +28,7 @@ export type RootStackParamList = {
   EditPet: { petId: string };
   ABCLog: { petId: string; petName: string; species: string };
   ABCLogList: { petId: string; petName: string };
+  ABCLogDetail: { logId: string };
   Insights: { petId: string; petName: string };
   Progress: { petId: string; petName: string };
   Coaching: { petId: string; petName: string };
@@ -113,6 +115,11 @@ export default function AppNavigator() {
           name="ABCLogList"
           component={ABCLogListScreen}
           options={{ title: 'Behavior History' }}
+        />
+        <Stack.Screen
+          name="ABCLogDetail"
+          component={ABCLogDetailScreen}
+          options={{ title: 'Log Details' }}
         />
         <Stack.Screen
           name="Insights"
