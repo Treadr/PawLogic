@@ -1,0 +1,38 @@
+name: Mobile CI
+
+on:
+  push:
+    paths:
+      - "mobile/**"
+  pull_request:
+    paths:
+      - "mobile/**"
+
+jobs:
+  lint-and-test:
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v4
+
+      - name: Set up Node 20
+        uses: actions/setup-node@v4
+        with:
+          node-version: "20"
+
+      - name: Install dependencies
+        run: npm ci
+        working-directory: mobile
+
+      - name: Lint with ESLint
+        run: npx eslint . --ext .ts,.tsx
+        working-directory: mobile
+
+      - name: Type check with TypeScript
+        run: npx tsc --noEmit
+        working-directory: mobile
+
+      - name: Run tests
+        run: npx jest --ci
+        working-directory: mobile
