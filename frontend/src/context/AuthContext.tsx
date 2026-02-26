@@ -1,12 +1,14 @@
 import { createContext, useContext, useState, useEffect, type ReactNode } from 'react';
-import { loginWithDevToken, verifyToken, logout as doLogout, getStoredUserId } from '../services/auth';
-import { getAuthToken } from '../services/api';
+import { signIn as doSignIn, signUp as doSignUp, restoreSession, logout as doLogout } from '../services/auth';
+import { setAuthToken } from '../services/api';
+import { supabase } from '../services/supabase';
 
 interface AuthState {
   userId: string | null;
   isAuthenticated: boolean;
   isLoading: boolean;
-  login: (userId: string) => Promise<void>;
+  signIn: (email: string, password: string) => Promise<void>;
+  signUp: (email: string, password: string) => Promise<void>;
   logout: () => void;
 }
 
@@ -17,25 +19,33 @@ export function AuthProvider({ children }: { children: ReactNode }) {
   const [isLoading, setIsLoading] = useState(true);
 
   useEffect(() => {
-    const token = getAuthToken();
-    if (token) {
-      verifyToken()
-        .then((res) => setUserId(res.user_id))
-        .catch(() => {
-          doLogout();
-          setUserId(null);
-        })
-        .finally(() => setIsLoading(false));
-    } else {
-      const stored = getStoredUserId();
-      if (stored) setUserId(stored);
-      setIsLoading(false);
-    }
+    restoreSession()
+      .then((result) => {
+        if (result) setUserId(result.userId);
+      })
+      .catch(() => {
+        doLogout();
+        setUserId(null);
+      })
+      .finally(() => setIsLoading(false));
+
+    const { data: { subscription } } = supabase.auth.onAuthStateChange(
+      (_event, session) => {
+        setAuthToken(session?.access_token ?? null);
+        setUserId(session?.user?.id ?? null);
+      },
+    );
+    return () => subscription.unsubscribe();
   }, []);
 
-  const login = async (id: string) => {
-    await loginWithDevToken(id);
-    setUserId(id);
+  const signIn = async (email: string, password: string) => {
+    await doSignIn(email, password);
+    const { data } = await supabase.auth.getUser();
+    setUserId(data.user?.id ?? null);
+  };
+
+  const signUp = async (email: string, password: string) => {
+    await doSignUp(email, password);
   };
 
   const logout = () => {
@@ -44,7 +54,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
   };
 
   return (
-    <AuthContext.Provider value={{ userId, isAuthenticated: !!userId, isLoading, login, logout }}>
+    <AuthContext.Provider value={{ userId, isAuthenticated: !!userId, isLoading, signIn, signUp, logout }}>
       {children}
     </AuthContext.Provider>
   );

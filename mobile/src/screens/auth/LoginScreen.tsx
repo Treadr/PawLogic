@@ -13,23 +13,38 @@ import type { NativeStackScreenProps } from '@react-navigation/native-stack';
 
 import { colors } from '../../constants/colors';
 import { fontSize, spacing, borderRadius } from '../../constants/typography';
-import { loginWithDevToken } from '../../services/auth';
+import { signIn, signUp } from '../../services/auth';
 import type { RootStackParamList } from '../../navigation/AppNavigator';
 
 type Props = NativeStackScreenProps<RootStackParamList, 'Login'>;
 
 export default function LoginScreen({ navigation }: Props) {
-  const [userId, setUserId] = useState('');
+  const [email, setEmail] = useState('');
+  const [password, setPassword] = useState('');
   const [loading, setLoading] = useState(false);
+  const [isSignUp, setIsSignUp] = useState(false);
 
-  const handleLogin = async () => {
-    const id = userId.trim() || crypto.randomUUID();
+  const handleSubmit = async () => {
+    const trimmedEmail = email.trim();
+    if (!trimmedEmail || !password) {
+      Alert.alert('Missing fields', 'Please enter your email and password.');
+      return;
+    }
     setLoading(true);
     try {
-      await loginWithDevToken(id);
-      navigation.reset({ index: 0, routes: [{ name: 'Dashboard' }] });
+      if (isSignUp) {
+        await signUp(trimmedEmail, password);
+        Alert.alert(
+          'Check your email',
+          'We sent a confirmation link. Please verify your email, then sign in.',
+        );
+        setIsSignUp(false);
+      } else {
+        await signIn(trimmedEmail, password);
+        navigation.reset({ index: 0, routes: [{ name: 'Dashboard' }] });
+      }
     } catch (err) {
-      Alert.alert('Login Failed', String(err));
+      Alert.alert(isSignUp ? 'Sign Up Failed' : 'Sign In Failed', String(err));
     } finally {
       setLoading(false);
     }
@@ -64,30 +79,56 @@ export default function LoginScreen({ navigation }: Props) {
 
       {/* Login form */}
       <View style={styles.formCard}>
-        <Text style={styles.formTitle}>Get Started</Text>
-        <Text style={styles.label}>Dev User ID (optional)</Text>
+        <Text style={styles.formTitle}>{isSignUp ? 'Create Account' : 'Welcome Back'}</Text>
+
+        <Text style={styles.label}>Email</Text>
         <TextInput
           style={styles.input}
-          placeholder="Leave blank for random UUID"
+          placeholder="you@example.com"
           placeholderTextColor={colors.neutral[400]}
-          value={userId}
-          onChangeText={setUserId}
+          value={email}
+          onChangeText={setEmail}
           autoCapitalize="none"
           autoCorrect={false}
+          keyboardType="email-address"
+          textContentType="emailAddress"
         />
+
+        <Text style={styles.label}>Password</Text>
+        <TextInput
+          style={styles.input}
+          placeholder={isSignUp ? 'Create a password (6+ chars)' : 'Your password'}
+          placeholderTextColor={colors.neutral[400]}
+          value={password}
+          onChangeText={setPassword}
+          secureTextEntry
+          textContentType={isSignUp ? 'newPassword' : 'password'}
+        />
+
         <TouchableOpacity
           style={[styles.button, loading && styles.buttonDisabled]}
-          onPress={handleLogin}
+          onPress={handleSubmit}
           disabled={loading}
           activeOpacity={0.8}
         >
           <Text style={styles.buttonText}>
-            {loading ? 'Signing in...' : 'Sign In'}
+            {loading
+              ? (isSignUp ? 'Creating account...' : 'Signing in...')
+              : (isSignUp ? 'Create Account' : 'Sign In')}
+          </Text>
+        </TouchableOpacity>
+
+        <TouchableOpacity
+          style={styles.toggleLink}
+          onPress={() => setIsSignUp(!isSignUp)}
+        >
+          <Text style={styles.toggleText}>
+            {isSignUp
+              ? 'Already have an account? Sign in'
+              : "Don't have an account? Sign up"}
           </Text>
         </TouchableOpacity>
       </View>
-
-      <Text style={styles.footer}>Development build v0.1.0</Text>
     </KeyboardAvoidingView>
   );
 }
@@ -199,10 +240,13 @@ const styles = StyleSheet.create({
     fontSize: fontSize.lg,
     fontWeight: '700',
   },
-  footer: {
-    textAlign: 'center',
-    color: 'rgba(255,255,255,0.4)',
-    fontSize: fontSize.xs,
-    marginBottom: spacing.xl,
+  toggleLink: {
+    marginTop: spacing.lg,
+    alignItems: 'center',
+  },
+  toggleText: {
+    color: colors.primary[500],
+    fontSize: fontSize.sm,
+    fontWeight: '600',
   },
 });

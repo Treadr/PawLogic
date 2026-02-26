@@ -1,8 +1,12 @@
 """Security utilities and FastAPI dependencies for authentication.
 
 Provides:
-- ``get_current_user`` -- FastAPI dependency that extracts and verifies the
-  Bearer token from the Authorization header.
+- ``get_jwt_payload`` -- FastAPI dependency that extracts and verifies the
+  Bearer token, returning the full JWT payload.
+- ``get_current_user`` -- FastAPI dependency that returns the user ID from
+  the verified JWT.
+- ``ensure_db_user`` -- FastAPI dependency that auto-provisions a user row
+  on first request, using email from Supabase JWT claims when available.
 - ``create_dev_token`` -- Helper to mint JWTs for local development/testing.
 """
 
@@ -26,37 +30,51 @@ _bearer_scheme = HTTPBearer(auto_error=False)
 _DEV_TOKEN_LIFETIME_HOURS = 24
 
 
-async def get_current_user(
+async def get_jwt_payload(
     credentials: HTTPAuthorizationCredentials | None = Depends(_bearer_scheme),
-) -> str:
-    """FastAPI dependency that returns the authenticated user's ID.
+) -> dict:
+    """FastAPI dependency that returns the full verified JWT payload.
 
-    Extracts the Bearer token from the ``Authorization`` header, verifies it
-    via :func:`~app.middleware.auth.verify_jwt`, and returns the ``sub`` claim
-    (the user ID string).
+    Extracts the Bearer token from the ``Authorization`` header and verifies
+    it via :func:`~app.middleware.auth.verify_jwt`.  The result is cached
+    per-request by FastAPI's dependency injection so downstream dependencies
+    that also depend on this won't decode the token twice.
 
     Raises:
         UnauthorizedException: If no token is provided or verification fails.
     """
     if credentials is None:
         raise UnauthorizedException("Authorization header is missing")
+    return verify_jwt(credentials.credentials)
 
-    payload = verify_jwt(credentials.credentials)
+
+async def get_current_user(
+    payload: dict = Depends(get_jwt_payload),
+) -> str:
+    """FastAPI dependency that returns the authenticated user's ID.
+
+    Reads the ``sub`` claim from the already-verified JWT payload.
+
+    Raises:
+        UnauthorizedException: If the payload is missing the user ID.
+    """
     user_id: str | None = payload.get("sub")
-
     if not user_id:
         raise UnauthorizedException("Token payload is missing user ID")
-
     return user_id
 
 
 async def ensure_db_user(
     user_id: str = Depends(get_current_user),
+    payload: dict = Depends(get_jwt_payload),
     db: AsyncSession = Depends(get_db),
 ) -> str:
     """Ensure the authenticated user has a record in the users table.
 
     Auto-provisions a minimal user row on first request (get-or-create).
+    When the JWT comes from Supabase Auth the ``email`` claim is used;
+    otherwise falls back to a placeholder address.
+
     Returns the user_id string for use by downstream endpoints.
     """
     from app.models.user import User
@@ -64,7 +82,8 @@ async def ensure_db_user(
     uid = uuid.UUID(user_id)
     result = await db.execute(select(User).where(User.id == uid))
     if result.scalar_one_or_none() is None:
-        user = User(id=uid, email=f"{user_id}@pawlogic.dev")
+        email = payload.get("email") or f"{user_id}@pawlogic.dev"
+        user = User(id=uid, email=email)
         db.add(user)
         await db.flush()
     return user_id
