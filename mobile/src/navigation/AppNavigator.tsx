@@ -18,6 +18,8 @@ import EditPetScreen from '../screens/pets/EditPetScreen';
 import CoachingScreen from '../screens/coaching/CoachingScreen';
 import SettingsScreen from '../screens/settings/SettingsScreen';
 import { restoreSession } from '../services/auth';
+import { setAuthToken } from '../services/api';
+import { supabase } from '../services/supabase';
 
 export type RootStackParamList = {
   Login: undefined;
@@ -46,6 +48,13 @@ export default function AppNavigator() {
       setIsLoggedIn(restored);
       setIsLoading(false);
     });
+
+    const { data: { subscription } } = supabase.auth.onAuthStateChange(
+      (_event, session) => {
+        setAuthToken(session?.access_token ?? null);
+      },
+    );
+    return () => subscription.unsubscribe();
   }, []);
 
   if (isLoading) {

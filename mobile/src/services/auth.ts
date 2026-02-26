@@ -1,42 +1,30 @@
-import AsyncStorage from '@react-native-async-storage/async-storage';
-import { api, setAuthToken } from './api';
+import { setAuthToken } from './api';
+import { supabase } from './supabase';
 
-const TOKEN_KEY = 'pawlogic_auth_token';
-const USER_ID_KEY = 'pawlogic_user_id';
-
-export async function getStoredToken(): Promise<string | null> {
-  return AsyncStorage.getItem(TOKEN_KEY);
+export async function signUp(email: string, password: string): Promise<void> {
+  const { error } = await supabase.auth.signUp({ email, password });
+  if (error) throw new Error(error.message);
 }
 
-export async function getStoredUserId(): Promise<string | null> {
-  return AsyncStorage.getItem(USER_ID_KEY);
-}
-
-export async function loginWithDevToken(userId: string): Promise<string> {
-  const data = await api.post<{ token: string; user_id: string }>(
-    '/auth/dev-token',
-    { user_id: userId },
-  );
-  await AsyncStorage.setItem(TOKEN_KEY, data.token);
-  await AsyncStorage.setItem(USER_ID_KEY, data.user_id);
-  setAuthToken(data.token);
-  return data.token;
+export async function signIn(email: string, password: string): Promise<void> {
+  const { data, error } = await supabase.auth.signInWithPassword({
+    email,
+    password,
+  });
+  if (error) throw new Error(error.message);
+  setAuthToken(data.session?.access_token ?? null);
 }
 
 export async function restoreSession(): Promise<boolean> {
-  const token = await getStoredToken();
-  if (!token) return false;
-  setAuthToken(token);
-  try {
-    await api.post<{ user_id: string }>('/auth/verify', {});
+  const { data } = await supabase.auth.getSession();
+  if (data.session) {
+    setAuthToken(data.session.access_token);
     return true;
-  } catch {
-    await logout();
-    return false;
   }
+  return false;
 }
 
 export async function logout(): Promise<void> {
-  await AsyncStorage.multiRemove([TOKEN_KEY, USER_ID_KEY]);
+  await supabase.auth.signOut();
   setAuthToken(null);
 }

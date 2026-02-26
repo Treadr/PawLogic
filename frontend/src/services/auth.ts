@@ -1,21 +1,30 @@
-import { api, setAuthToken } from './api';
+import { setAuthToken } from './api';
+import { supabase } from './supabase';
 
-export async function loginWithDevToken(userId: string): Promise<string> {
-  const data = await api.post<{ token: string; user_id: string }>('/auth/dev-token', { user_id: userId });
-  setAuthToken(data.token);
-  localStorage.setItem('pawlogic_user_id', data.user_id);
-  return data.token;
+export async function signUp(email: string, password: string): Promise<void> {
+  const { error } = await supabase.auth.signUp({ email, password });
+  if (error) throw new Error(error.message);
 }
 
-export async function verifyToken(): Promise<{ user_id: string; message: string }> {
-  return api.post<{ user_id: string; message: string }>('/auth/verify', {});
+export async function signIn(email: string, password: string): Promise<void> {
+  const { data, error } = await supabase.auth.signInWithPassword({
+    email,
+    password,
+  });
+  if (error) throw new Error(error.message);
+  setAuthToken(data.session?.access_token ?? null);
 }
 
-export function getStoredUserId(): string | null {
-  return localStorage.getItem('pawlogic_user_id');
+export async function restoreSession(): Promise<{ userId: string } | null> {
+  const { data } = await supabase.auth.getSession();
+  if (data.session) {
+    setAuthToken(data.session.access_token);
+    return { userId: data.session.user.id };
+  }
+  return null;
 }
 
 export function logout() {
+  supabase.auth.signOut();
   setAuthToken(null);
-  localStorage.removeItem('pawlogic_user_id');
 }

@@ -1,7 +1,7 @@
 # PawLogic Progress Tracker
 
 ## Current Phase: MVP (Phase 1) -- Core Complete
-**Last Updated:** 2026-02-16
+**Last Updated:** 2026-02-26
 **Commits:** 18 on main
 
 ---
@@ -25,12 +25,13 @@
 | Task | Status | Notes |
 |------|--------|-------|
 | JWT verification middleware | Complete | Dev token + verify endpoint |
-| Auto-provisioning users | Complete | ensure_db_user dependency (FK-safe) |
-| Login screen (mobile) | Complete | Branded teal hero + pills + card form |
-| Login page (web) | Complete | Consistent branding |
-| Auth state management (mobile) | Complete | Context-based with AsyncStorage |
-| Auth state management (web) | Complete | React Context + localStorage |
-| Auth integration tests | Complete | test_auth.py |
+| Auto-provisioning users | Complete | ensure_db_user dependency (FK-safe), Supabase email extraction |
+| Supabase Auth integration | Complete | @supabase/supabase-js on mobile + web, email/password sign-up/sign-in |
+| Login screen (mobile) | Complete | Email/password form with sign-up toggle |
+| Login page (web) | Complete | Email/password form with sign-up toggle |
+| Auth state management (mobile) | Complete | Supabase session + onAuthStateChange listener |
+| Auth state management (web) | Complete | Supabase session + onAuthStateChange in AuthContext |
+| Auth integration tests | Complete | test_auth.py (dev-token still available for testing) |
 
 ### Pet Profiles
 | Task | Status | Notes |
@@ -129,9 +130,9 @@
 ## Recommended Next Steps
 
 ### Immediate Priority (MVP Polish)
-1. **Production Auth** -- Replace dev JWT tokens with real Supabase Auth or another auth provider. The current dev-token system works for development but needs real authentication for any deployment.
-2. **Environment Config** -- Create production `.env` template with real secrets management (e.g., AWS Secrets Manager, Railway env vars). Remove hardcoded credentials from docker-compose.yml.
-3. **Anthropic API Key** -- Configure `ANTHROPIC_API_KEY` in `.env` to enable AI coaching. Currently returns fallback responses.
+1. ~~**Production Auth**~~ -- **Done.** Supabase Auth integrated across mobile, web, and backend. Email/password sign-up/sign-in with session management.
+2. ~~**Environment Config**~~ -- **Done.** `.env` files configured with Supabase credentials, Anthropic API key, and JWT secret.
+3. ~~**Anthropic API Key**~~ -- **Done.** `ANTHROPIC_API_KEY` configured in backend `.env`.
 4. **Victory Native charts** -- Replace custom bar/dot chart components with Victory Native for richer visualizations on mobile.
 5. **Mobile/Web testing** -- Add Jest (mobile) and Vitest (web) test suites to match backend coverage.
 
@@ -165,9 +166,9 @@
 ## Blockers & Dependencies
 | Blocker | Blocking | Owner | Status |
 |---------|----------|-------|--------|
-| Production auth provider | Real user accounts | Ricker | Pending -- choose Supabase Auth vs. custom |
-| Anthropic API key | AI coaching responses | Ricker | Pending -- add to .env |
-| ABA taxonomy review (RBT) | Category refinement | RBT team member | Pending -- current categories are functional |
+| ~~Production auth provider~~ | Real user accounts | Ricker | **Resolved** -- Supabase Auth (free tier, 50K MAU) |
+| ~~Anthropic API key~~ | AI coaching responses | Ricker | **Resolved** -- configured in .env |
+| ABA taxonomy review (RBT) | Category refinement | RBT team member | **Approved** -- initial taxonomy accepted, can iterate |
 | Conflict of interest review | Go/no-go decision | Ricker | Pending |
 
 ---
