@@ -1,12 +1,20 @@
 import React, { useCallback, useEffect, useState } from 'react';
 import {
   ActivityIndicator,
+  Dimensions,
   ScrollView,
   StyleSheet,
   Text,
   TouchableOpacity,
   View,
 } from 'react-native';
+import {
+  VictoryBar,
+  VictoryChart,
+  VictoryAxis,
+  VictoryLine,
+  VictoryScatter,
+} from 'victory-native';
 import type { NativeStackScreenProps } from '@react-navigation/native-stack';
 import type { RootStackParamList } from '../../navigation/AppNavigator';
 import { colors } from '../../constants/colors';
@@ -17,10 +25,27 @@ import type {
   SeverityTrendData,
   CategoryBreakdown,
 } from '../../services/progress';
+import { formatCategory, severityColor } from '../../utils/chartUtils';
 
 type Props = NativeStackScreenProps<RootStackParamList, 'Progress'>;
 
 type TimeRange = 7 | 14 | 30 | 90;
+
+const SCREEN_WIDTH = Dimensions.get('window').width;
+// account for ScrollView padding (lg*2) + card padding (lg*2)
+const CHART_WIDTH = SCREEN_WIDTH - spacing.lg * 4;
+
+const AXIS_STYLE = {
+  tickLabels: { fontSize: 9, fill: colors.neutral[500] },
+  axis: { stroke: colors.neutral[200] },
+  grid: { stroke: colors.neutral[100] },
+};
+
+const X_AXIS_STYLE = {
+  tickLabels: { fontSize: 9, angle: -40, textAnchor: 'end' as const, fill: colors.neutral[500] },
+  axis: { stroke: colors.neutral[200] },
+  grid: { stroke: 'transparent' },
+};
 
 export default function ProgressScreen({ route }: Props) {
   const { petId } = route.params;
@@ -67,6 +92,25 @@ export default function ProgressScreen({ route }: Props) {
     { label: '90d', value: 90 },
   ];
 
+  const freqChartData =
+    frequency?.data.map((d) => ({
+      x: new Date(d.date).toLocaleDateString('en-US', { month: 'short', day: 'numeric' }),
+      y: d.count,
+    })) ?? [];
+
+  const sevAvgData =
+    severity?.data.map((d) => ({
+      x: new Date(d.date).toLocaleDateString('en-US', { month: 'short', day: 'numeric' }),
+      y: d.avg_severity,
+      color: severityColor(d.avg_severity),
+    })) ?? [];
+
+  const sevMaxData =
+    severity?.data.map((d) => ({
+      x: new Date(d.date).toLocaleDateString('en-US', { month: 'short', day: 'numeric' }),
+      y: d.max_severity,
+    })) ?? [];
+
   return (
     <ScrollView style={styles.container} contentContainerStyle={styles.content}>
       {/* Time Range Selector */}
@@ -74,10 +118,7 @@ export default function ProgressScreen({ route }: Props) {
         {timeRanges.map((tr) => (
           <TouchableOpacity
             key={tr.value}
-            style={[
-              styles.timeChip,
-              days === tr.value && styles.timeChipActive,
-            ]}
+            style={[styles.timeChip, days === tr.value && styles.timeChipActive]}
             onPress={() => setDays(tr.value)}
           >
             <Text
@@ -92,154 +133,148 @@ export default function ProgressScreen({ route }: Props) {
         ))}
       </View>
 
-      {/* Behavior Frequency */}
+      {/* Behavior Frequency — Victory Bar Chart */}
       <View style={styles.card}>
         <Text style={styles.sectionTitle}>Behavior Frequency</Text>
-        {frequency && frequency.data.length > 0 ? (
-          <View style={styles.barChart}>
-            {frequency.data.map((d) => {
-              const maxCount = Math.max(...frequency.data.map((x) => x.count));
-              const barWidth = maxCount > 0 ? (d.count / maxCount) * 100 : 0;
-              return (
-                <View key={d.date} style={styles.barRow}>
-                  <Text style={styles.barLabel}>
-                    {new Date(d.date).toLocaleDateString('en-US', {
-                      month: 'short',
-                      day: 'numeric',
-                    })}
-                  </Text>
-                  <View style={styles.barTrack}>
-                    <View
-                      style={[styles.barFill, { width: `${barWidth}%` }]}
-                    />
-                  </View>
-                  <Text style={styles.barValue}>{d.count}</Text>
-                </View>
-              );
-            })}
-          </View>
+        {freqChartData.length > 0 ? (
+          <VictoryChart
+            width={CHART_WIDTH}
+            height={220}
+            domainPadding={{ x: 20 }}
+            padding={{ top: 10, bottom: 55, left: 32, right: 10 }}
+          >
+            <VictoryAxis tickFormat={(t) => t} style={X_AXIS_STYLE} />
+            <VictoryAxis
+              dependentAxis
+              tickFormat={(t: number) => Math.round(t)}
+              style={AXIS_STYLE}
+            />
+            <VictoryBar
+              data={freqChartData}
+              style={{ data: { fill: colors.primary[400] } }}
+            />
+          </VictoryChart>
         ) : (
           <Text style={styles.emptyText}>No data for this period.</Text>
         )}
       </View>
 
-      {/* Severity Trend */}
+      {/* Severity Trend — Victory Line + Scatter */}
       <View style={styles.card}>
         <Text style={styles.sectionTitle}>Severity Trend</Text>
-        {severity && severity.data.length > 0 ? (
-          <View>
-            {severity.data.map((d) => (
-              <View key={d.date} style={styles.severityRow}>
-                <Text style={styles.barLabel}>
-                  {new Date(d.date).toLocaleDateString('en-US', {
-                    month: 'short',
-                    day: 'numeric',
-                  })}
-                </Text>
-                <View style={styles.severityDots}>
-                  {[1, 2, 3, 4, 5].map((level) => (
-                    <View
-                      key={level}
-                      style={[
-                        styles.severityDot,
-                        level <= Math.round(d.avg_severity) &&
-                          styles.severityDotFilled,
-                        level <= Math.round(d.avg_severity) && {
-                          backgroundColor: severityColor(d.avg_severity),
-                        },
-                      ]}
-                    />
-                  ))}
-                </View>
-                <Text style={styles.barValue}>{d.avg_severity}</Text>
+        {sevAvgData.length > 0 ? (
+          <>
+            <View style={styles.legend}>
+              <View style={styles.legendItem}>
+                <View style={[styles.legendDot, { backgroundColor: colors.primary[400] }]} />
+                <Text style={styles.legendLabel}>Average</Text>
               </View>
-            ))}
-          </View>
+              <View style={styles.legendItem}>
+                <View style={[styles.legendDot, { backgroundColor: colors.accent[500] }]} />
+                <Text style={styles.legendLabel}>Maximum</Text>
+              </View>
+            </View>
+            <VictoryChart
+              width={CHART_WIDTH}
+              height={220}
+              domain={{ y: [0, 5] }}
+              padding={{ top: 10, bottom: 55, left: 32, right: 10 }}
+            >
+              <VictoryAxis tickFormat={(t) => t} style={X_AXIS_STYLE} />
+              <VictoryAxis
+                dependentAxis
+                tickValues={[1, 2, 3, 4, 5]}
+                style={AXIS_STYLE}
+              />
+              <VictoryLine
+                data={sevAvgData}
+                style={{ data: { stroke: colors.primary[400], strokeWidth: 2 } }}
+                interpolation="monotoneX"
+              />
+              <VictoryScatter
+                data={sevAvgData}
+                size={4}
+                style={{ data: { fill: colors.primary[400] } }}
+              />
+              <VictoryLine
+                data={sevMaxData}
+                style={{
+                  data: {
+                    stroke: colors.accent[500],
+                    strokeWidth: 2,
+                    strokeDasharray: '6,4',
+                  },
+                }}
+                interpolation="monotoneX"
+              />
+              <VictoryScatter
+                data={sevMaxData}
+                size={4}
+                style={{ data: { fill: colors.accent[500] } }}
+              />
+            </VictoryChart>
+          </>
         ) : (
           <Text style={styles.emptyText}>No data for this period.</Text>
         )}
       </View>
 
-      {/* Category Breakdown */}
+      {/* Top Behaviors — horizontal bars */}
       <View style={styles.card}>
         <Text style={styles.sectionTitle}>Top Behaviors</Text>
         {categories && categories.behaviors.length > 0 ? (
-          categories.behaviors.slice(0, 5).map((b) => (
-            <View key={b.category} style={styles.categoryRow}>
-              <Text style={styles.categoryName}>
-                {formatCategory(b.category)}
-              </Text>
-              <View style={styles.categoryBar}>
-                <View
-                  style={[
-                    styles.categoryFill,
-                    {
-                      width: `${
-                        (b.count /
-                          Math.max(...categories.behaviors.map((x) => x.count))) *
-                        100
-                      }%`,
-                    },
-                  ]}
-                />
+          categories.behaviors.slice(0, 5).map((b) => {
+            const maxCount = Math.max(...categories.behaviors.map((x) => x.count));
+            return (
+              <View key={b.category} style={styles.categoryRow}>
+                <Text style={styles.categoryName}>{formatCategory(b.category)}</Text>
+                <View style={styles.categoryBar}>
+                  <View
+                    style={[
+                      styles.categoryFill,
+                      { width: `${(b.count / maxCount) * 100}%` },
+                    ]}
+                  />
+                </View>
+                <Text style={styles.categoryCount}>{b.count}</Text>
               </View>
-              <Text style={styles.categoryCount}>{b.count}</Text>
-            </View>
-          ))
+            );
+          })
         ) : (
           <Text style={styles.emptyText}>No data for this period.</Text>
         )}
       </View>
 
+      {/* Top Triggers — horizontal bars */}
       <View style={styles.card}>
         <Text style={styles.sectionTitle}>Top Triggers</Text>
         {categories && categories.antecedents.length > 0 ? (
-          categories.antecedents.slice(0, 5).map((a) => (
-            <View key={a.category} style={styles.categoryRow}>
-              <Text style={styles.categoryName}>
-                {formatCategory(a.category)}
-              </Text>
-              <View style={styles.categoryBar}>
-                <View
-                  style={[
-                    styles.categoryFill,
-                    {
-                      width: `${
-                        (a.count /
-                          Math.max(
-                            ...categories.antecedents.map((x) => x.count),
-                          )) *
-                        100
-                      }%`,
-                      backgroundColor: colors.accent[400],
-                    },
-                  ]}
-                />
+          categories.antecedents.slice(0, 5).map((a) => {
+            const maxCount = Math.max(...categories.antecedents.map((x) => x.count));
+            return (
+              <View key={a.category} style={styles.categoryRow}>
+                <Text style={styles.categoryName}>{formatCategory(a.category)}</Text>
+                <View style={styles.categoryBar}>
+                  <View
+                    style={[
+                      styles.categoryFill,
+                      {
+                        width: `${(a.count / maxCount) * 100}%`,
+                        backgroundColor: colors.accent[400],
+                      },
+                    ]}
+                  />
+                </View>
+                <Text style={styles.categoryCount}>{a.count}</Text>
               </View>
-              <Text style={styles.categoryCount}>{a.count}</Text>
-            </View>
-          ))
+            );
+          })
         ) : (
           <Text style={styles.emptyText}>No data for this period.</Text>
         )}
       </View>
     </ScrollView>
   );
-}
-
-function formatCategory(slug: string): string {
-  return slug
-    .split('_')
-    .map((w) => w.charAt(0).toUpperCase() + w.slice(1))
-    .join(' ');
-}
-
-function severityColor(avg: number): string {
-  if (avg <= 1.5) return colors.success;
-  if (avg <= 2.5) return '#84CC16';
-  if (avg <= 3.5) return colors.warning;
-  if (avg <= 4.5) return '#F97316';
-  return colors.error;
 }
 
 const styles = StyleSheet.create({
@@ -258,17 +293,13 @@ const styles = StyleSheet.create({
     borderRadius: borderRadius.full,
     backgroundColor: colors.neutral[100],
   },
-  timeChipActive: {
-    backgroundColor: colors.primary[500],
-  },
+  timeChipActive: { backgroundColor: colors.primary[500] },
   timeChipText: {
     fontSize: fontSize.sm,
     fontWeight: '600',
     color: colors.neutral[600],
   },
-  timeChipTextActive: {
-    color: '#fff',
-  },
+  timeChipTextActive: { color: '#fff' },
   card: {
     backgroundColor: colors.surface,
     borderRadius: borderRadius.lg,
@@ -284,7 +315,7 @@ const styles = StyleSheet.create({
     fontSize: fontSize.lg,
     fontWeight: '600',
     color: colors.neutral[800],
-    marginBottom: spacing.md,
+    marginBottom: spacing.sm,
   },
   emptyText: {
     fontSize: fontSize.sm,
@@ -292,56 +323,24 @@ const styles = StyleSheet.create({
     textAlign: 'center',
     paddingVertical: spacing.lg,
   },
-  barChart: { gap: spacing.sm },
-  barRow: {
+  legend: {
     flexDirection: 'row',
-    alignItems: 'center',
-    gap: spacing.sm,
-  },
-  barLabel: {
-    fontSize: fontSize.xs,
-    color: colors.neutral[500],
-    width: 48,
-  },
-  barTrack: {
-    flex: 1,
-    height: 16,
-    backgroundColor: colors.neutral[100],
-    borderRadius: borderRadius.sm,
-    overflow: 'hidden',
-  },
-  barFill: {
-    height: '100%',
-    backgroundColor: colors.primary[400],
-    borderRadius: borderRadius.sm,
-  },
-  barValue: {
-    fontSize: fontSize.xs,
-    fontWeight: '600',
-    color: colors.neutral[700],
-    width: 24,
-    textAlign: 'right',
-  },
-  severityRow: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    gap: spacing.sm,
+    gap: spacing.lg,
     marginBottom: spacing.xs,
   },
-  severityDots: {
-    flex: 1,
+  legendItem: {
     flexDirection: 'row',
-    gap: 4,
-    justifyContent: 'center',
+    alignItems: 'center',
+    gap: spacing.xs,
   },
-  severityDot: {
-    width: 12,
-    height: 12,
-    borderRadius: 6,
-    backgroundColor: colors.neutral[200],
+  legendDot: {
+    width: 10,
+    height: 10,
+    borderRadius: 5,
   },
-  severityDotFilled: {
-    backgroundColor: colors.warning,
+  legendLabel: {
+    fontSize: fontSize.xs,
+    color: colors.neutral[500],
   },
   categoryRow: {
     flexDirection: 'row',
