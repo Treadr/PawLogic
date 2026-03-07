@@ -38,7 +38,7 @@ export default function DashboardPage() {
           <p>Get started by adding your first pet.</p>
         </div>
         <div className="empty-state">
-          <div className="empty-icon">\ud83d\udc3e</div>
+          <div className="empty-icon">{"🐾"}</div>
           <h3>No pets yet</h3>
           <p>Add a pet to start tracking behaviors with ABA science.</p>
           <Link to="/pets/add" className="btn btn-primary" style={{ marginTop: 16 }}>
@@ -133,7 +133,7 @@ export default function DashboardPage() {
 
           <div className="card-grid" style={{ marginTop: 24 }}>
             <Link to="/abc-logs/new" className="card" style={{ textDecoration: 'none', textAlign: 'center' }}>
-              <div style={{ fontSize: '2rem', marginBottom: 8 }}>\ud83d\udcdd</div>
+              <div style={{ fontSize: '2rem', marginBottom: 8 }}>{"📝"}</div>
               <h3>Log Behavior</h3>
               <p style={{ color: 'var(--text-secondary)', fontSize: '0.85rem' }}>
                 Record an ABC incident in under 30 seconds
@@ -141,7 +141,7 @@ export default function DashboardPage() {
             </Link>
 
             <Link to="/coaching" className="card" style={{ textDecoration: 'none', textAlign: 'center' }}>
-              <div style={{ fontSize: '2rem', marginBottom: 8 }}>\ud83e\udde0</div>
+              <div style={{ fontSize: '2rem', marginBottom: 8 }}>{"🧠"}</div>
               <h3>Ask the Coach</h3>
               <p style={{ color: 'var(--text-secondary)', fontSize: '0.85rem' }}>
                 Get AI-powered behavior advice
@@ -149,7 +149,7 @@ export default function DashboardPage() {
             </Link>
 
             <Link to="/progress" className="card" style={{ textDecoration: 'none', textAlign: 'center' }}>
-              <div style={{ fontSize: '2rem', marginBottom: 8 }}>\ud83d\udcc8</div>
+              <div style={{ fontSize: '2rem', marginBottom: 8 }}>{"📈"}</div>
               <h3>View Progress</h3>
               <p style={{ color: 'var(--text-secondary)', fontSize: '0.85rem' }}>
                 Charts and trends over time

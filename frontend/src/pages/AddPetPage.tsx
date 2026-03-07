@@ -69,7 +69,7 @@ export default function AddPetPage() {
                   style={{ fontSize: '1rem', padding: '10px 24px' }}
                   onClick={() => update('species', s)}
                 >
-                  {s === 'cat' ? '\ud83d\udc31' : '\ud83d\udc36'} {s.charAt(0).toUpperCase() + s.slice(1)}
+                  {s === 'cat' ? '🐱' : '🐶'} {s.charAt(0).toUpperCase() + s.slice(1)}
                 </button>
               ))}
             </div>

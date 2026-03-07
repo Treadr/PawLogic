@@ -48,7 +48,7 @@ export default function PetDetailPage() {
       <div className="page-header" style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
         <div>
           <h2>
-            {pet.species === 'cat' ? '\ud83d\udc31' : '\ud83d\udc36'} {pet.name}
+            {pet.species === 'cat' ? '🐱' : '🐶'} {pet.name}
           </h2>
           <p>
             {pet.species.charAt(0).toUpperCase() + pet.species.slice(1)}

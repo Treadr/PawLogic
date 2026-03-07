@@ -21,7 +21,7 @@ from sqlalchemy.ext.asyncio import AsyncSession
 from app.config import settings
 from app.core.exceptions import ForbiddenException, UnauthorizedException
 from app.db.session import get_db
-from app.middleware.auth import ALGORITHM, verify_jwt
+from app.middleware.auth import ALGORITHM_HS256, verify_jwt
 
 # Reusable scheme -- auto_error=False so we can provide our own message.
 _bearer_scheme = HTTPBearer(auto_error=False)
@@ -123,4 +123,4 @@ def create_dev_token(user_id: str) -> str:
 
     from jose import jwt
 
-    return jwt.encode(payload, secret, algorithm=ALGORITHM)
+    return jwt.encode(payload, secret, algorithm=ALGORITHM_HS256)

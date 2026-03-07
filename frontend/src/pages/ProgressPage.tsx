@@ -147,7 +147,7 @@ export default function ProgressPage() {
 
       {(!frequency || frequency.data.length === 0) && (!severity || severity.data.length === 0) && (
         <div className="empty-state">
-          <div className="empty-icon">{'\ud83d\udcc8'}</div>
+          <div className="empty-icon">{"📈"}</div>
           <h3>No data yet</h3>
           <p>Log behavior incidents to see progress charts.</p>
         </div>

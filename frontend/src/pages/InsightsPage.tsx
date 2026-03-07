@@ -120,7 +120,7 @@ export default function InsightsPage() {
 
       {filtered.length === 0 ? (
         <div className="empty-state">
-          <div className="empty-icon">{'\ud83d\udca1'}</div>
+          <div className="empty-icon">{"💡"}</div>
           <h3>No insights yet</h3>
           <p>Log at least 10 behavior incidents, then run pattern detection.</p>
         </div>

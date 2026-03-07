@@ -62,7 +62,7 @@ export default function CoachingPage() {
         <div className="chat-messages">
           {messages.length === 0 && (
             <div className="empty-state" style={{ padding: '40px 0' }}>
-              <div className="empty-icon">{'\ud83e\udde0'}</div>
+              <div className="empty-icon">{"🧠"}</div>
               <h3>Ask the Behavior Coach</h3>
               <p>Ask about {selectedPet.name}'s behavior patterns, triggers, or get advice on training strategies.</p>
               <div style={{ display: 'flex', flexWrap: 'wrap', gap: 8, justifyContent: 'center', marginTop: 16 }}>

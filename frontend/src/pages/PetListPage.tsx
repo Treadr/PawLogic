@@ -31,7 +31,7 @@ export default function PetListPage() {
 
       {pets.length === 0 ? (
         <div className="empty-state">
-          <div className="empty-icon">\ud83d\udc3e</div>
+          <div className="empty-icon">{"🐾"}</div>
           <h3>No pets yet</h3>
           <p>Add your first pet to start tracking behaviors.</p>
         </div>
@@ -44,7 +44,7 @@ export default function PetListPage() {
               onClick={() => navigate(`/pets/${pet.id}`)}
             >
               <div className="pet-icon">
-                {pet.species === 'cat' ? '\ud83d\udc31' : '\ud83d\udc36'}
+                {pet.species === 'cat' ? '🐱' : '🐶'}
               </div>
               <h3>{pet.name}</h3>
               <div className="pet-meta">

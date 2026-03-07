@@ -97,7 +97,7 @@ export default function ABCLogListPage() {
 
       {filtered.length === 0 ? (
         <div className="empty-state">
-          <div className="empty-icon">{'\ud83d\udcdd'}</div>
+          <div className="empty-icon">{"📝"}</div>
           <h3>No behavior logs yet</h3>
           <p>Start logging incidents to build a behavior profile.</p>
         </div>

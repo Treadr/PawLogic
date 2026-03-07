@@ -17,7 +17,7 @@ function PetSelector({ pets, selectedPet, onSelect }: { pets: Pet[]; selectedPet
       >
         {pets.map((p) => (
           <option key={p.id} value={p.id}>
-            {p.species === 'cat' ? '\ud83d\udc31' : '\ud83d\udc36'} {p.name}
+            {p.species === 'cat' ? '🐱' : '🐶'} {p.name}
           </option>
         ))}
       </select>
@@ -26,12 +26,12 @@ function PetSelector({ pets, selectedPet, onSelect }: { pets: Pet[]; selectedPet
 }
 
 const navItems = [
-  { to: '/', label: 'Dashboard', icon: '\ud83c\udfe0' },
-  { to: '/pets', label: 'Pets', icon: '\ud83d\udc3e' },
-  { to: '/abc-logs', label: 'Behavior Logs', icon: '\ud83d\udcdd' },
-  { to: '/insights', label: 'Insights', icon: '\ud83d\udca1' },
-  { to: '/progress', label: 'Progress', icon: '\ud83d\udcc8' },
-  { to: '/coaching', label: 'Coaching', icon: '\ud83e\udde0' },
+  { to: '/', label: 'Dashboard', icon: '🏠' },
+  { to: '/pets', label: 'Pets', icon: '🐾' },
+  { to: '/abc-logs', label: 'Behavior Logs', icon: '📝' },
+  { to: '/insights', label: 'Insights', icon: '💡' },
+  { to: '/progress', label: 'Progress', icon: '📈' },
+  { to: '/coaching', label: 'Coaching', icon: '🧠' },
   { to: '/settings', label: 'Settings', icon: '\u2699\ufe0f' },
 ];
 
