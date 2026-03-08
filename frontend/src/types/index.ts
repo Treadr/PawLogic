@@ -144,6 +144,35 @@ export interface CoachingResult {
   response: string;
   model: string;
   log_count: number;
+  session_id: string | null;
+}
+
+// ── Coaching Sessions ───────────────────────────────
+export interface CoachingSession {
+  id: string;
+  pet_id: string;
+  title: string;
+  message_count: number;
+  created_at: string;
+  updated_at: string;
+}
+
+export interface CoachingMessage {
+  id: string;
+  session_id: string;
+  role: 'user' | 'assistant';
+  content: string;
+  model: string | null;
+  created_at: string;
+}
+
+export interface CoachingSessionDetail {
+  id: string;
+  pet_id: string;
+  title: string;
+  messages: CoachingMessage[];
+  created_at: string;
+  updated_at: string;
 }
 
 // ── Progress ─────────────────────────────────────────

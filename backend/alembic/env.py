@@ -16,7 +16,7 @@ from sqlalchemy.ext.asyncio import create_async_engine
 sys.path.insert(0, os.path.join(os.path.dirname(__file__), ".."))
 
 from app.db.base import Base  # noqa: E402
-from app.models import ABCLog, Insight, Pet, User  # noqa: E402, F401
+from app.models import ABCLog, CoachingMessage, CoachingSession, Insight, Pet, User  # noqa: E402, F401
 
 config = context.config
 

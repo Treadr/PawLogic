@@ -46,3 +46,6 @@ class Pet(Base):
     insights: Mapped[list["Insight"]] = relationship(  # noqa: F821
         back_populates="pet", cascade="all, delete-orphan"
     )
+    coaching_sessions: Mapped[list["CoachingSession"]] = relationship(  # noqa: F821
+        back_populates="pet", cascade="all, delete-orphan"
+    )

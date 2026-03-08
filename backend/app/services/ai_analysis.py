@@ -67,11 +67,15 @@ async def coaching_response(
     pet_id: uuid.UUID,
     user_id: uuid.UUID,
     question: str,
+    conversation_history: list[dict] | None = None,
 ) -> dict:
     """Generate an AI coaching response about a pet's behavior.
 
     Uses the pet's ABC log history and existing insights as context.
     Falls back to a helpful message if Claude API is not configured.
+
+    If conversation_history is provided, builds a multi-turn messages array
+    for the Claude API call. Each entry should have 'role' and 'content'.
     """
     # Fetch pet info
     pet_result = await db.execute(select(Pet).where(Pet.id == pet_id, Pet.user_id == user_id))
@@ -104,9 +108,32 @@ async def coaching_response(
     log_context = _format_log_summary(logs)
     insight_context = _format_insights(insights)
 
-    user_message = (
-        f"{pet_context}\n\n{log_context}\n\n{insight_context}\n\nOwner's question: {question}"
-    )
+    context_block = f"{pet_context}\n\n{log_context}\n\n{insight_context}"
+
+    # Build messages array for Claude
+    if conversation_history:
+        # Multi-turn: inject pet context into the first user message,
+        # then append the new question as the latest user message
+        messages = []
+        for i, msg in enumerate(conversation_history):
+            if i == 0 and msg["role"] == "user":
+                # Prepend context to the first user message
+                messages.append({
+                    "role": "user",
+                    "content": f"{context_block}\n\nOwner's question: {msg['content']}",
+                })
+            else:
+                messages.append({"role": msg["role"], "content": msg["content"]})
+        # Add the new question
+        messages.append({
+            "role": "user",
+            "content": f"Owner's follow-up question: {question}",
+        })
+    else:
+        messages = [{
+            "role": "user",
+            "content": f"{context_block}\n\nOwner's question: {question}",
+        }]
 
     # Check if Claude API is configured
     if not settings.ANTHROPIC_API_KEY:
@@ -128,7 +155,7 @@ async def coaching_response(
             model="claude-haiku-4-5-20251001",
             max_tokens=800,
             system=SYSTEM_PROMPT,
-            messages=[{"role": "user", "content": user_message}],
+            messages=messages,
         )
         response_text = message.content[0].text
 
